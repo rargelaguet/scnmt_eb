@@ -1,0 +1,144 @@
+---
+title: "Gastrulation: MOFA applied to E7.5 stage"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+
+```{r}
+# library(MOFA)
+devtools::load_all("/Users/ricard/mofa")
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(scater)
+library(reticulate)
+library(RColorBrewer)
+```
+
+```{r}
+source("/Users/ricard/NMT-seq_EB+ESC/metaccrna/mofa/with_atlas/load_settings.R")
+```
+
+<!-- Load pretrained model -->
+```{r}
+model <- loadModel(paste0(io$outdir,"/hdf5/test2.hdf5"))
+```
+
+
+<!-- Filter sample metadata -->
+```{r}
+sample_metadata_filt <- sample_metadata %>% 
+  setkey(sample) %>% .[MOFA::sampleNames(model)]
+```
+
+<!-- Rename views -->
+```{r}
+opts$views_names <- c(
+
+  "met_H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm Enhancers (met)",
+  "met_H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm Enhancers (met)",
+  "met_H3K27ac_distal_E7.5_End_intersect12"="Endoderm Enhancers (met)",
+  "acc_H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_End_intersect12"="Endoderm Enhancers (acc)",
+  "met_prom_2000_2000"="Promoters (met)",
+  "acc_prom_2000_2000"="Promoters (acc)",
+  "met_prom_200_200"="Promoters (met)",
+  "acc_prom_200_200"="Promoters (acc)",
+  "rna" = "RNA expression"
+)
+
+viewNames(model) <- stringr::str_replace_all(viewNames(model), opts$views_names)
+```
+
+
+<!-- Subset factors -->
+Select Factors that are active in the RNA
+```{r}
+r2 <- calculateVarianceExplained(model)$R2PerFactor
+factors <- r2[,"RNA expression"]>0.005
+model <- subsetFactors(model, which(factors))
+factorNames(model) <- paste("Factor",1:getDimensions(model)[["K"]], sep=" ")
+```
+
+<!-- Calculate variance explained -->
+```{r} 
+# plotVarianceExplained(model, cluster=F)
+
+fvar_mk <- calculateVarianceExplained(model)$R2PerFactor
+fvar_mk[fvar_mk<0.001] <- 0
+
+# convert matrix to data frame for ggplot2
+fvar_mk_df <- reshape2::melt(fvar_mk, varnames=c("factor","view"))
+fvar_mk_df$factor <- factor(fvar_mk_df$factor)
+
+# Grid plot with the variance explained per factor and view
+p <- ggplot(fvar_mk_df, aes_string(x="view",y="factor")) +
+  geom_tile(aes_string(fill="value"), color="black") +
+  guides(fill=guide_colorbar("R2")) +
+  scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar") +
+  ylab("Latent factor") +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(size=11, angle=60, hjust=1, vjust=1, color="black"),
+    axis.text.y = element_text(size=12, color="black"),
+    axis.title.y = element_text(size=15),
+    axis.line = element_blank(),
+    axis.ticks =  element_blank(),
+    panel.background = element_blank()
+  )
+print(p)
+
+# pdf(paste0(io$outdir,"/pdf/varianceExplained.pdf"), useDingbats = F, onefile = F, width=12, height=5)
+# p
+# dev.off()
+```
+
+
+
+
+<!-- Scatterplot of Factors -->
+```{r}
+p <- plotFactorScatter(model, 
+  factors=c(3,4), 
+  color_by=sample_metadata_filt$lineage10x_2,
+  shape_by=sample_metadata_filt$assay
+)
+p <- p + scale_color_manual(values=opts$colors)
+
+#p <- p + labs(x=sprintf("Factor 1 (%.2f%%)",r2[1,]*100), y=sprintf("Factor 2 (%.2f%%)",r2[2,]*100))
+
+# pdf(paste0(io$outdir,"/pdf/scatterplot_F1F2.pdf"), useDingbats = F, onefile = F, width=7, height=4)
+print(p)
+# dev.off()
+```
+ 
+```{r}
+plotWeights(model, view="RNA expression", factor=1, scale=F)
+plotWeights(model, view="Ectoderm Enhancers (met)", factor=2, scale=F)
+# plotWeights(model, view="met_genebody", factor=1, scale=F)
+```
+
+```{r}
+plotFactorScatter(model, 
+  factors=c("Factor 1","Factor 3"), 
+  color_by=sample_metadata_filt$celltype.mapped,
+  shape_by=sample_metadata_filt$stage.mapped
+)
+```
+
+```{r}
+Z <- getFactors(model, factors="all", as.data.frame=F) %>% as.data.frame %>% 
+  tibble::rownames_to_column("sample") %>% as.data.table %>%
+  merge(sample_metadata_filt[,c("sample","celltype.mapped","stage.mapped")], by="sample")
+
+# Z[lineage10x_2=="Embryonic_endoderm" & `Factor 1`>(0.75) & `Factor 2`<(0)]
+# Z[celltype.mapped%in%c("Embryonic_endoderm") & `Factor 5`>(-1) & `Factor 2`<(-0.25)]
+Z[`Factor 2`<(0.35) & celltype.mapped=="Epiblast"]
+# Z[stage.mapped%in%c("Nascent_mesoderm") & `Factor 4`<(-0.5)]
+```
+
+

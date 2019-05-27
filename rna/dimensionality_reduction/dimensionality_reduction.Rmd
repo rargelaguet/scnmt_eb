@@ -1,0 +1,238 @@
+---
+title: "Gastrulation: dimensionality reduction on RNA data"
+output: 
+  BiocStyle::html_document: 
+  fig_width: 10
+  fig_height: 8
+---
+  
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(scater)
+# library(scran)
+library(ggplot2)
+library(RColorBrewer)
+library(umap)
+```
+
+```{r funcs, echo=FALSE}
+# source("/Users/ricard/gastrulation/rna/differential/utils.R")
+# source("/Users/ricard/gastrulation/rna/dimensionality_reduction/utils.R")
+```
+
+
+```{r define_opts, echo=FALSE}
+
+## Define I/O ##
+io <- list()
+io$rna <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/SingleCellExperiment.rds"
+io$metadata.file <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
+io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/dimensionality_reduction"
+
+## Define options ##
+opts <- list()
+
+# Stage-specific colors
+# opts$colors <- c(E4.5="#B2E2E2", E5.5="#66C2A4", E6.5="#2CA25F", E7.5="#006D2C")
+
+opts$colors <- c(
+  "Epiblast" = "#63B8FF",
+  "Mesoderm" = "#CD3278",
+  "Primitive Streak"="sandybrown",
+  "Endoderm" = "#43CD80",
+  "Ectoderm" = "steelblue",
+  "Blood" = "darkred"
+)
+
+# Define which cells to use
+opts$day_lineage <- c(
+  # Day 2
+  "Day2_Epiblast",
+  "Day2_Primitive Streak",
+  
+  # Day 4/5
+  "Day4_Epiblast",
+  "Day4_Primitive Streak",
+  "Day4_Mesoderm",
+  "Day5_Epiblast",
+  "Day5_Primitive Streak",
+  "Day5_Mesoderm",
+  
+  # Day 6/7
+  "Day6_Mesoderm",
+  "Day6_Endoderm",
+  "Day6_Blood",
+  "Day7_Mesoderm",
+  "Day7_Endoderm",
+  "Day7_Blood"
+)
+
+opts$genotype <- c(
+  "WT",
+  "KO"
+)
+
+opts$cells <- fread(io$metadata.file) %>% 
+  .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
+  .[day_lineage%in%opts$day_lineage & genotype%in%opts$genotype] %>%
+  .[pass_rnaQC==T,id_rna]
+```
+
+<!-- Load sample metadata -->
+```{r load_metadata, echo=FALSE}
+sample_metadata <- fread(io$metadata.file) %>% 
+  .[,lineage:=lineage10x_2] %>%
+  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
+  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)] %>%
+  .[id_rna %in% opts$cells]
+```
+
+<!-- Load RNA expression data --> 
+```{r load_data, echo=FALSE}
+sce <- readRDS(io$rna)[,opts$cells]
+stopifnot(colnames(sce)==sample_metadata$id_rna)
+
+sce$lineage <- sample_metadata$lineage
+```
+
+<!-- Parse RNA expression data -->
+```{r}
+# sce$stage <- sample_metadata$stage.mapped
+# sce$stage_lineage <- sample_metadata$stage_lineage
+```
+
+<!-- Select HVG -->
+```{r}
+# trend = scran::trendVar(sce, use.spikes = FALSE, loess.args = list(span = 0.05))
+# decomp = scran::decomposeVar(sce, fit = trend)
+# decomp = decomp[decomp$mean > 0.5,]
+# decomp$FDR = p.adjust(decomp$p.value, method = "fdr")
+# genes <- rownames(decomp)[decomp$p.value < 0.05]
+
+keep_variable <- 1000
+genes <- names(tail(sort(apply(logcounts(sce),1,var)), n=keep_variable))
+
+sce_filt <- sce[genes,]
+```
+
+<!-- Regress out covariates -->
+```{r}
+data <- scale(t(logcounts(sce_filt)), center = T, scale = F)
+
+data_regressed <- apply(data, 2, function(x) {
+  # lm.out <- lm(formula=expr~ngenes+culture, data=data.frame(expr=x, ngenes=rowSums(data>0), culture=sce_filt$culture));
+  lm.out <- lm(formula=expr~ngenes, data=data.frame(expr=x, ngenes=rowSums(data>0)));
+  residuals <- lm.out[["residuals"]]+lm.out[["coefficients"]][1]
+})
+```
+
+<!-- PCA -->
+```{r}
+sce_filt@reducedDims$PCA <- irlba::prcomp_irlba(data_regressed, n = 25)$x
+```
+
+```{r}
+# sce_filt@reducedDims$PCA <- sce_filt@reducedDims$PCA[,2:ncol(sce_filt@reducedDims$PCA)]
+# sce_filt@reducedDims$PCA <- sce_filt@reducedDims$PCA[,c(1,2,3,6)]
+```
+
+```{r}
+# plotPCA(sce_filt, colour_by="lineage", shape_by="culture", ncomponents=c(1,4))
+```
+
+<!-- t-SNE -->
+```{r}
+set.seed(42)
+sce_filt <- runTSNE(sce_filt, use_dimred="PCA")
+```
+
+<!-- UMAP -->
+```{r}
+set.seed(42)
+sce_filt <- runUMAP(sce_filt, use_dimred="PCA", min_dist=0.7, n_neighbors=25)
+```
+
+<!-- Plot -->
+```{r}
+to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(sce_filt)] %>%
+    merge(sample_metadata,by="id_rna")
+
+p <- ggplot(to.plot, aes(x=V1,y=V2)) +
+  # geom_point(aes(fill=lineage), pch=21, color="black", alpha=0.9, size=1.0, stroke=0.15) +
+  # scale_fill_manual(values=opts$colors) +
+  geom_point(aes(color=lineage, shape=genotype), size=3) +
+  scale_color_manual(values=opts$colors) +
+  labs(x="UMAP Dimension 1", y="UMAP Dimension 2") +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  theme(
+    axis.title = element_text(colour="black", size=rel(1.1)),
+    # axis.text = element_text(colour="black",size=rel(1.0)),
+    axis.text = element_blank(),
+    axis.line = element_line(colour="black", size=rel(0.9)),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    legend.position="none",
+    legend.text=element_text(size=15),
+    legend.key = element_blank(),
+    legend.title=element_blank(),
+    legend.background=element_blank(),
+    panel.border = element_blank()
+  )
+
+pdf(paste0(io$outdir,"/rna_umap.pdf"), width=6.5, height=8, useDingbats = F)
+print(p)
+dev.off()
+```
+
+```{r}
+rownames(sce) <- rowData(sce)$symbol
+```
+
+```{r}
+marker_genes <- c(
+  
+  # Epiblast
+  "Utf1","Slc7a3",
+  
+  # Primitive Streak
+  "T","Fst",          
+  
+  # Mesoderm
+  "Wnt2", "Twist1",
+  
+  # Endoderm
+  "Sox17", "Foxa1",
+  
+  # Blood
+  "Hbb-bh1", "Hba-a1", "Hba-x", "P2rx1"
+  )
+
+# marker_genes <- c("Wnt2", "Twist1", "Aplnr", "Foxf1")
+
+for (i in marker_genes) {
+  to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(sce_filt)] %>%
+    merge(sample_metadata) %>%
+    .[,expr:=exprs(sce[i,])[1,]]
+  
+  p <- ggplot(to.plot, aes(x=V1, y=V2)) +
+    # geom_point(aes(color=expr), size=0.4) +
+    ggrastr::geom_point_rast(aes(color=expr, shape=genotype), size=1.5) +
+    viridis::scale_color_viridis() +
+    labs(x="UMAP Dimension 1", y="UMAP Dimension 2", title=i) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(hjust=0.5, size=rel(1.5)),
+      axis.ticks = element_blank(),
+      axis.text = element_blank(),
+      legend.position = "none",
+      legend.direction = "horizontal"
+    )
+
+  pdf(sprintf("%s/%s_umap.pdf",io$outdir,i), width=4.5, height=4, useDingbats = F)
+  print(p)
+  dev.off()
+}
+```
+

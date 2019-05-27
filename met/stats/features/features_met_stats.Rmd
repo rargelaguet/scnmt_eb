@@ -1,0 +1,126 @@
+---
+title: ""
+output: 
+  BiocStyle::html_document:
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r import, include=FALSE}
+library(ggplot2)
+library(data.table)
+library(purrr)
+library(RColorBrewer)
+```
+
+```{r, echo=FALSE}
+boxplot_theme <- function() {
+  p <- theme(
+    plot.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_text(colour="black", size=20, vjust=1.5),
+    axis.text.x = element_text(colour="black",size=rel(1.7)),
+    axis.text.y = element_text(colour="black",size=rel(1.7)),
+    axis.line = element_line(colour="black", size=rel(0.7)),
+    axis.ticks.x = element_line(colour="black", size=rel(1.0)),
+    axis.ticks.y = element_line(colour="black", size=rel(1.0)),
+    # axis.ticks.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    legend.position="top",
+    legend.text=element_text(size=13),
+    legend.title=element_blank(),
+    legend.background=element_blank(),
+    panel.border = element_blank()
+  )
+}
+
+mean_sd <- function(x) { return(data.frame(y=mean(x), ymin=mean(x)-sd(x), ymax=mean(x)+sd(x))) }
+```
+
+<!-- Define I/O and options -->
+```{r options, echo=FALSE}
+source("/Users/ricard/NMT-seq_EB+ESC/met/stats/features/load_settings.R")
+```
+
+<!-- Load methylation data -->
+```{r load, echo=FALSE}
+data <- lapply(names(opts$annos), function(n) fread(sprintf("zcat < %s/%s.tsv.gz",io$in.data,n))) %>% rbindlist %>%
+  setnames(c("id_met","id","anno","Nmet","Ntotal","rate"))
+```
+
+<!-- Load sample metadata -->
+```{r}
+sample_metadata <- fread(io$in.metadata) %>% 
+  .[id_met%in%opts$cells] %>%
+  .[,lineage:=lineage10x_2] %>%
+  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
+  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)]
+```
+
+<!-- Merge methylation data and metadata -->
+```{r}
+data <- merge(sample_metadata, data, by="id_met")
+```
+
+<!-- Calculate statistics per features -->
+```{r, echo=FALSE}
+stats <- data %>% 
+  .[,.(rate=sum(Nmet)/sum(Ntotal)), by=c("genotype","day","anno")] %>%
+  .[,anno:=stringr::str_replace_all(anno, opts$annos)]
+```
+
+
+<!-- Heatmap with mean methylation per stage -->
+```{r}
+to.plot <- stats %>%
+  dcast(anno~stage, value.var="rate") %>% 
+  as.data.frame %>% tibble::column_to_rownames("anno") %>%
+  .[opts$annos,]
+
+order <- c("CpG islands", "CGI promoters", "non-CGI promoters", "E6.5 enhancers", "E7.5 enhancers", "Gene body", "LINE", "LTR")
+
+color = colorRampPalette(brewer.pal(n = 7, name="OrRd"))(100)
+pdf("/Users/ricard/gastrulation/met/stats/features/out/met_mean_heatmap.pdf", useDingbats = F, onefile = F, width=7, height=3)
+pheatmap::pheatmap(tmp[order,], cluster_cols = F, cluster_rows=F, color=color)
+dev.off()
+```
+
+<!-- Heatmap with variance methylation per stage -->
+```{r}
+tmp <- fstats[,.(var=var(mean)), by=c("anno","stage")] %>% dcast(anno~stage, value.var="var") %>% 
+  as.data.frame %>% tibble::column_to_rownames("anno")
+
+color = colorRampPalette(brewer.pal(n = 7, name="OrRd"))(100)
+# pdf("/Users/ricard/gastrulation/met/stats/features/out/met_variance_heatmap.pdf", useDingbats = F, onefile = F, width=6, height=4)
+pheatmap::pheatmap(tmp, cluster_cols = F, color=color)
+# dev.off()
+```
+
+<!-- Heatmap with mean methylation per lineage -->
+```{r}
+for (i in unique(fstats$stage)) {
+  tmp <- fstats[stage==i,.(rate=mean(rate)),by=c("anno","stage_lineage")] %>% dcast(anno~stage_lineage, value.var="rate") %>% 
+    as.data.frame %>% tibble::column_to_rownames("anno")
+  
+  color = colorRampPalette(brewer.pal(n = 7, name="OrRd"))(100)
+  # color = colorRampPalette(c("Yellow", "Red"))(100)
+  # pdf(sprintf("%s/met_mean_%s_heatmap.pdf",io$out,i), onefile = F, width=6, height=4)
+  pheatmap::pheatmap(tmp, cluster_cols = F, color=color)
+  # dev.off()
+}
+```
+
+<!-- Heatmap with variance methylation per lineage -->
+```{r}
+for (i in unique(fstats$stage)) {
+  tmp <- fstats[stage==i,.(var=var(mean)),by=c("anno","stage_lineage")] %>% dcast(anno~stage_lineage, value.var="var") %>% 
+    as.data.frame %>% tibble::column_to_rownames("anno")
+  
+  # pdf(sprintf("%s/met_var_%s_heatmap.pdf",io$out,i), onefile = F, width=6, height=4)
+  color = colorRampPalette(brewer.pal(n = 7, name="OrRd"))(100)
+  pheatmap::pheatmap(tmp, cluster_cols = F, color=color)
+  # dev.off()
+}
+```
