@@ -1,0 +1,177 @@
+---
+title: "NMT-seq_EB+ESC: dimensionality reduction on RNA data"
+output: 
+  BiocStyle::html_document: 
+  fig_width: 10
+  fig_height: 8
+---
+  
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(scater)
+library(ggplot2)
+library(ggpubr)
+library(RColorBrewer)
+```
+
+```{r funcs, echo=FALSE}
+# source("/Users/ricard/NMT-seq_EB+ESC/rna/differential/utils.R")
+```
+
+```{r define_opts, echo=FALSE}
+
+## Define I/O ##
+io <- list()
+io$rna <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/SingleCellExperiment.rds"
+io$metadata.file <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
+io$cellcycle.file <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/cell_cycle/cell_cycle_scran.txt"
+io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/cell_cycle/out"
+
+## Define options ##
+opts <- list()
+
+# Define which cells to use
+opts$day_lineage <- c(
+  # Day 2
+  "Day2_Epiblast",
+  "Day2_Primitive Streak"
+  
+  # Day 4/5
+  # "Day4_Epiblast",
+  # "Day4_Primitive Streak",
+  # "Day4_Mesoderm",
+  # "Day5_Epiblast",
+  # "Day5_Primitive Streak",
+  # "Day5_Mesoderm"
+  
+  # Day 6/7
+  # "Day6_Mesoderm",
+  # "Day6_Endoderm",
+  # "Day6_Blood",
+  # "Day7_Mesoderm",
+  # "Day7_Endoderm",
+  # "Day7_Blood"
+)
+
+opts$genotype <- c(
+  "WT",
+  "KO"
+)
+
+opts$cells <- fread(io$metadata.file) %>% 
+  .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
+  .[day_lineage%in%opts$day_lineage & genotype%in%opts$genotype] %>%
+  .[pass_rnaQC==T,id_rna]
+```
+
+<!-- Load sample metadata -->
+```{r load_metadata, echo=FALSE}
+sample_metadata <- fread(io$metadata.file) %>% 
+  .[,lineage:=lineage10x_2] %>%
+  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
+  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)] %>%
+  .[id_rna %in% opts$cells]
+```
+
+<!-- Load RNA expression data --> 
+```{r load_data, echo=FALSE}
+sce <- readRDS(io$rna)[,opts$cells]
+rownames(sce) <- toupper(rowData(sce)$symbol)
+```
+
+<!-- Load pre-computed cell cycle states -->
+```{r}
+sample_metadata <- sample_metadata %>% merge(fread(io$cellcycle.file), by="id_rna")
+```
+
+<!-- Add cell cycle states to SingleCellExperiment -->
+```{r}
+sample_metadata <- sample_metadata %>% setkey(id_rna) %>% .[colnames(sce)]
+sce$phase <- sample_metadata$phase
+sce$phase2 <- sample_metadata$phase2
+```
+
+<!-- Load cell cycle genes -->
+
+From cyclone (scran)
+```{r}
+# mm.pairs <- readRDS(system.file("exdata", "mouse_cycle_markers.rds", package="scran"))
+```
+
+From Seurat
+```{r}
+s.genes <- Seurat::cc.genes$s.genes
+g2m.genes <- Seurat::cc.genes$g2m.genes
+cell.cycle.markers <- c(s.genes,g2m.genes)
+cell.cycle.markers <- cell.cycle.markers[cell.cycle.markers %in% rownames(sce)]
+```
+
+```{r}
+sce_filt <- sce[unlist(cell.cycle.markers),]
+sce_filt <- sce_filt[,sce_filt$phase2%in%c("G1S","G2M")]
+sce_filt <- normalize(sce_filt)
+```
+
+```{r}
+sce_filt <- runPCA(sce_filt, ncomponents=10)
+# sce_filt@reducedDims$PCA <- sce_filt@reducedDims$PCA[,-1]
+```
+
+```{r}
+plotPCA(sce_filt, colour_by="culture", ncomponents=1:2)
+plotPCA(sce_filt, colour_by="phenotype", ncomponents=1:2)
+plotPCA(sce_filt, colour_by="phase", ncomponents=1:2)
+plotPCA(sce_filt, colour_by="lineage10x_2", ncomponents=1:2)
+```
+
+
+```{r}
+# sce_filt <- runUMAP(sce_filt)
+# plotUMAP(sce_filt, colour_by="phase2")
+```
+
+```{r}
+# sce_filt <- runTSNE(sce_filt)
+# plotTSNE(sce_filt, colour_by="phase2")
+```
+
+<!-- Plot expression of key markers -->
+
+S phase
+```{r}
+s.genes
+```
+
+```{r}
+# plotPCA(sce_filt, colour_by="E2F8", shape_by="phase")
+# plotPCA(sce_filt, colour_by="TYMS", shape_by="phase")
+# plotPCA(sce_filt, colour_by="FEN1", shape_by="phase")
+# plotPCA(sce_filt, colour_by="MCM4", shape_by="phase")
+# plotPCA(sce_filt, colour_by="MCM5", shape_by="phase")
+```
+
+G2M phase
+```{r}
+g2m.genes
+```
+
+```{r}
+plotPCA(sce_filt, colour_by="CDK1", shape_by="phase")
+plotPCA(sce_filt, colour_by="TOP2A", shape_by="phase")
+plotPCA(sce_filt, colour_by="MKI67", shape_by="phase")
+```
+
+G1 phase
+```{r}
+```
+
+<!-- Characterisation of PC1 -->
+Is PC1 G1 vs S/G2M and PC2 S vs G2M??
+```{r}
+cor(
+  sce_filt@reducedDims$PCA,
+  sce_filt$total_features_by_counts
+)
+```
+

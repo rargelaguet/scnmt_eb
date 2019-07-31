@@ -1,10 +1,7 @@
-library(scater)
 library(data.table)
 library(purrr)
 library(ggplot2)
 library(ggpubr)
-
-# source("/Users/ricard/gastrulation/rna/differential/utils.R")
 
 ################
 ## Define I/O ##
@@ -30,35 +27,15 @@ io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/differential/pdf"
 
 opts <- list()
 opts$comparisons.1 <- c(
-  "E7.5Endoderm_vs_E7.5Mesoderm" = "Endoderm_vs_Mesoderm",
-  
-  "E4.5Epiblast_vs_E7.5Mesoderm" = "E4.5Epiblast_vs_Mesoderm",
-  "E5.5Epiblast_vs_E7.5Mesoderm" = "E5.5Epiblast_vs_Mesoderm",
-  "E6.5Epiblast_vs_E7.5Mesoderm" = "E6.5Epiblast_vs_Mesoderm",
-  "E7.5Epiblast_vs_E7.5Mesoderm" = "E7.5Epiblast_vs_Mesoderm",
-  "E7.5Ectoderm_vs_E7.5Mesoderm" = "E7.5Ectoderm_vs_Mesoderm",
-  
-  "E4.5Epiblast_vs_E7.5Endoderm" = "E4.5Epiblast_vs_Endoderm",
-  "E5.5Epiblast_vs_E7.5Endoderm" = "E5.5Epiblast_vs_Endoderm",
-  "E6.5Epiblast_vs_E7.5Endoderm" = "E6.5Epiblast_vs_Endoderm",
-  "E7.5Epiblast_vs_E7.5Endoderm" = "E7.5Epiblast_vs_Endoderm",
-  "E7.5Ectoderm_vs_E7.5Endoderm" = "E7.5Ectoderm_vs_Endoderm"
+  "E6.5Epiblast_vs_E7.5Mesoderm" = "Epiblast_vs_Mesoderm",
+  "E6.5Epiblast_vs_E7.5Endoderm" = "Epiblast_vs_Endoderm",
+  "E6.5E7.5Epiblast_vs_E6.5E7.5Primitive_Streak" = "Epiblast_vs_PrimitiveStreak"
 )
 
 opts$comparisons.2 <- c(
-  "Endoderm_vs_Mesoderm" = "Endoderm_vs_Mesoderm",
-  
-  "Epiblast_vs_Mesoderm" = "E4.5Epiblast_vs_Mesoderm",
-  "Epiblast_vs_Mesoderm" = "E5.5Epiblast_vs_Mesoderm",
-  "Epiblast_vs_Mesoderm" = "E6.5Epiblast_vs_Mesoderm",
-  "Epiblast_vs_Mesoderm" = "E7.5Epiblast_vs_Mesoderm",
-  "Epiblast_vs_Mesoderm" = "E7.5Ectoderm_vs_Mesoderm",
-  
-  "Epiblast_vs_Endoderm" = "E4.5Epiblast_vs_Endoderm",
-  "Epiblast_vs_Endoderm" = "E5.5Epiblast_vs_Endoderm",
-  "Epiblast_vs_Endoderm" = "E6.5Epiblast_vs_Endoderm",
-  "Epiblast_vs_Endoderm" = "E7.5Epiblast_vs_Endoderm",
-  "Epiblast_vs_Endoderm" = "E7.5Ectoderm_vs_Endoderm"
+  "Epiblast_vs_Mesoderm" = "Epiblast_vs_Mesoderm",
+  "Epiblast_vs_Endoderm" = "Epiblast_vs_Endoderm",
+  "Epiblast_vs_PrimitiveStreak" = "Epiblast_vs_PrimitiveStreak"
 )
 
 ##############################################
@@ -98,11 +75,11 @@ for (i in unique(diff$comparison)) {
     ggrepel::geom_text_repel(data=to.plot[marker==T], aes(x=EB, y=in_vivo, label=symbol), size=5, color="red") +
     scale_size_manual(values=c("TRUE"=1.5, "FALSE"=0.5)) +
     scale_color_manual(values=c("TRUE"="red", "FALSE"="grey70")) +
-    labs(x="differential RNA expression (Embryoid body)", y="differential RNA expression (in vivo)") + 
+    labs(x="differential RNA expression (EBs)", y="differential RNA expression (in vivo)") + 
     theme(legend.position = "none")
   # print(p)
 
-  pdf(sprintf("%s/%s.pdf",io$outdir,i), useDingbats = F, width=5, height=5)
+  pdf(sprintf("%s/%s.pdf",io$outdir,i), useDingbats = F, width=4, height=4)
   print(p)
   dev.off()
   

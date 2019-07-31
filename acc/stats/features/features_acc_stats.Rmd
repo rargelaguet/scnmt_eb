@@ -1,0 +1,62 @@
+---
+title: ""
+output: 
+  BiocStyle::html_document:
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r import, include=FALSE}
+library(ggplot2)
+library(data.table)
+library(purrr)
+library(RColorBrewer)
+```
+
+<!-- Define I/O and options -->
+```{r options, echo=FALSE}
+
+source("/Users/ricard/scnmt_eb/acc/stats/features/load_settings.R")
+```
+
+<!-- Load accessibility data -->
+```{r load, echo=FALSE}
+data <- lapply(names(opts$annos), function(n) fread(sprintf("%s/%s.tsv.gz",io$in.data,n))) %>% rbindlist %>%
+  setnames(c("id_acc","id","anno","Nacc","Ntotal","rate"))
+```
+
+<!-- Load sample metadata -->
+```{r}
+sample_metadata <- fread(io$in.metadata) %>% 
+  .[id_acc%in%opts$cells] %>%
+  .[,lineage:=lineage10x_2] %>%
+  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
+  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)]
+```
+
+<!-- Merge accessibility data and metadata -->
+```{r}
+data <- merge(sample_metadata, data, by="id_acc")
+```
+
+<!-- Calculate statistics per features -->
+```{r, echo=FALSE}
+stats <- data %>% 
+  .[,.(rate=sum(Nacc)/sum(Ntotal)), by=c("genotype","day","anno")] %>%
+  .[,anno:=stringr::str_replace_all(anno, opts$annos)]
+```
+
+<!-- Heatmap with mean accessibility rates -->
+```{r}
+to.plot <- stats %>%
+  dcast(anno~day, value.var="rate") %>% 
+  as.data.frame %>% tibble::column_to_rownames("anno") %>%
+  .[opts$annos,]
+
+pdf(paste0(io$outdir,"/acc_heatmap.pdf"), useDingbats=F, onefile=F, width=7, height=3)
+pheatmap::pheatmap(to.plot, 
+  cluster_cols = F, cluster_rows = F, 
+  color = colorRampPalette(rev(brewer.pal(n=7, name="Blues")))(100))
+dev.off()
+```

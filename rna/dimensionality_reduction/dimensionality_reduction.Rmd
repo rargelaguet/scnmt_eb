@@ -10,17 +10,10 @@ output:
 library(data.table)
 library(purrr)
 library(scater)
-# library(scran)
 library(ggplot2)
 library(RColorBrewer)
 library(umap)
 ```
-
-```{r funcs, echo=FALSE}
-# source("/Users/ricard/gastrulation/rna/differential/utils.R")
-# source("/Users/ricard/gastrulation/rna/dimensionality_reduction/utils.R")
-```
-
 
 ```{r define_opts, echo=FALSE}
 
@@ -33,9 +26,7 @@ io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/dimensionality_reduction"
 ## Define options ##
 opts <- list()
 
-# Stage-specific colors
-# opts$colors <- c(E4.5="#B2E2E2", E5.5="#66C2A4", E6.5="#2CA25F", E7.5="#006D2C")
-
+# Lineage colors
 opts$colors <- c(
   "Epiblast" = "#63B8FF",
   "Mesoderm" = "#CD3278",
@@ -47,6 +38,7 @@ opts$colors <- c(
 
 # Define which cells to use
 opts$day_lineage <- c(
+  
   # Day 2
   "Day2_Epiblast",
   "Day2_Primitive Streak",
@@ -96,11 +88,6 @@ stopifnot(colnames(sce)==sample_metadata$id_rna)
 sce$lineage <- sample_metadata$lineage
 ```
 
-<!-- Parse RNA expression data -->
-```{r}
-# sce$stage <- sample_metadata$stage.mapped
-# sce$stage_lineage <- sample_metadata$stage_lineage
-```
 
 <!-- Select HVG -->
 ```{r}
@@ -110,8 +97,7 @@ sce$lineage <- sample_metadata$lineage
 # decomp$FDR = p.adjust(decomp$p.value, method = "fdr")
 # genes <- rownames(decomp)[decomp$p.value < 0.05]
 
-keep_variable <- 1000
-genes <- names(tail(sort(apply(logcounts(sce),1,var)), n=keep_variable))
+genes <- names(tail(sort(apply(logcounts(sce),1,var)), n=1000))
 
 sce_filt <- sce[genes,]
 ```
@@ -138,7 +124,7 @@ sce_filt@reducedDims$PCA <- irlba::prcomp_irlba(data_regressed, n = 25)$x
 ```
 
 ```{r}
-# plotPCA(sce_filt, colour_by="lineage", shape_by="culture", ncomponents=c(1,4))
+# plotPCA(sce_filt, colour_by="lineage", shape_by="culture", ncomponents=c(1,2))
 ```
 
 <!-- t-SNE -->
@@ -161,7 +147,7 @@ to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(s
 p <- ggplot(to.plot, aes(x=V1,y=V2)) +
   # geom_point(aes(fill=lineage), pch=21, color="black", alpha=0.9, size=1.0, stroke=0.15) +
   # scale_fill_manual(values=opts$colors) +
-  geom_point(aes(color=lineage, shape=genotype), size=3) +
+  geom_point(aes(color=lineage, shape=genotype), size=2.75) +
   scale_color_manual(values=opts$colors) +
   labs(x="UMAP Dimension 1", y="UMAP Dimension 2") +
   guides(colour = guide_legend(override.aes = list(size=3))) +
@@ -181,7 +167,7 @@ p <- ggplot(to.plot, aes(x=V1,y=V2)) +
     panel.border = element_blank()
   )
 
-pdf(paste0(io$outdir,"/rna_umap.pdf"), width=6.5, height=8, useDingbats = F)
+pdf(paste0(io$outdir,"/rna_umap.pdf"), width=8, height=6.5, useDingbats = F)
 print(p)
 dev.off()
 ```
@@ -200,7 +186,7 @@ marker_genes <- c(
   "T","Fst",          
   
   # Mesoderm
-  "Wnt2", "Twist1",
+  "Phlda2", "Mesp1", "Foxf1",
   
   # Endoderm
   "Sox17", "Foxa1",
@@ -209,18 +195,20 @@ marker_genes <- c(
   "Hbb-bh1", "Hba-a1", "Hba-x", "P2rx1"
   )
 
-# marker_genes <- c("Wnt2", "Twist1", "Aplnr", "Foxf1")
+# marker_genes <- c("Wnt2", "Twist1", "Aplnr", "Foxf1","Mesp1")
 
 for (i in marker_genes) {
+  
   to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(sce_filt)] %>%
     merge(sample_metadata) %>%
     .[,expr:=exprs(sce[i,])[1,]]
   
   p <- ggplot(to.plot, aes(x=V1, y=V2)) +
     # geom_point(aes(color=expr), size=0.4) +
-    ggrastr::geom_point_rast(aes(color=expr, shape=genotype), size=1.5) +
+    ggrastr::geom_point_rast(aes(color=expr, shape=genotype), size=1.25) +
     viridis::scale_color_viridis() +
-    labs(x="UMAP Dimension 1", y="UMAP Dimension 2", title=i) +
+    # labs(x="UMAP Dimension 1", y="UMAP Dimension 2", title=i) +
+    labs(x="", y="", title=i) +
     theme_classic() +
     theme(
       plot.title = element_text(hjust=0.5, size=rel(1.5)),
@@ -230,7 +218,7 @@ for (i in marker_genes) {
       legend.direction = "horizontal"
     )
 
-  pdf(sprintf("%s/%s_umap.pdf",io$outdir,i), width=4.5, height=4, useDingbats = F)
+  pdf(sprintf("%s/%s_umap.pdf",io$outdir,i), width=2.3, height=2.3, useDingbats = F)
   print(p)
   dev.off()
 }

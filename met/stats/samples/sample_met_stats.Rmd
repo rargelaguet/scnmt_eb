@@ -148,22 +148,23 @@ stats_filt <- stats %>%
   .[,day:=factor(day,levels=c("Day2","Day45","Day67"))] %>%
   .[,lineage:=factor(lineage,levels=c("Epiblast","Primitive Streak","Mesoderm","Blood","Endoderm"))]
 
-p <- ggplot(stats_filt, aes(x=lineage, y=mean)) +
+p <- ggplot(stats_filt, aes(x=day, y=mean)) +
   geom_boxplot(alpha=0.75, fill="#F8766D", outlier.shape = NA, coef=1) +
   # facet_wrap(~day, scales="free_x", nrow=1, space="free_x") +
-  facet_grid(~day, scales = "free_x", space = "free_x") +
+  # facet_grid(~day, scales = "free_x", space = "free_x") +
   geom_jitter(alpha=1.0, color="#F8766D") +
-  coord_cartesian(ylim=c(0,100)) +
+  coord_cartesian(ylim=c(5,95)) +
   ylab("Global methylation (%)") +
   theme_bw() + theme_pub() +
   theme(
     strip.background = element_blank(),
+    strip.text = element_blank(),
     # axis.text.x = element_text(colour="black",size=rel(1.0), angle=30, hjust=1, vjust=1)
     axis.text.x = element_text(colour="black", size=rel(1.1))
   )
 # print(p)
 
-pdf(paste0(io$outdir,"/pdf/globalmet_stages.pdf"), width=8, height=4, useDingbats = F)
+pdf(paste0(io$outdir,"/pdf/globalmet_stages.pdf"), width=6, height=6, useDingbats = F)
 print(p)
 dev.off()
 ```

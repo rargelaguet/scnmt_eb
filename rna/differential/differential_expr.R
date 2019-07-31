@@ -7,9 +7,9 @@ suppressMessages(library(argparse))
 
 ## Initialize argument parser ##
 p <- ArgumentParser(description='')
-p$add_argument('-s1', '--lineage1', type="character",  nargs='+',  help='lineage 1 (E4.5_EPI, E5.5_VE,...)')
-p$add_argument('-s2', '--lineage2', type="character",  nargs='+',  help='lineage 2 (E4.5_EPI, E5.5_VE,...)')
-p$add_argument('-o',  '--outfile',        type="character",              help='Output file')
+p$add_argument('-s1', '--lineage_genotype1', type="character",  nargs='+',  help='lineage_genotype 1')
+p$add_argument('-s2', '--lineage_genotype2', type="character",  nargs='+',  help='lineage_genotype 2')
+p$add_argument('-o',  '--outfile',           type="character",              help='Output file')
 args <- p$parse_args(commandArgs(TRUE))
 
 
@@ -24,7 +24,7 @@ if (grepl("ricard",Sys.info()['nodename'])) {
   io$gene.metadata <- "/hps/nobackup/stegle/users/ricard/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   source("/homes/ricard/gastrulation/rna/differential/utils.R")
 }
-io$sample_metadata <- paste0(io$basedir,"/sample_metadata2.txt")
+io$sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$rna.infile <- paste(io$basedir,"rna/SingleCellExperiment.rds",sep="/")
 io$outfile <- args$outfile
 
@@ -32,11 +32,11 @@ io$outfile <- args$outfile
 opts <- list()
 
 # Define stage and lineage
-opts$groupA <- args$lineage1
-opts$groupB <- args$lineage2
+opts$groupA <- args$lineage_genotype1
+opts$groupB <- args$lineage_genotype2
 
-opts$groupA <- c("Epiblast_Tet_WT")
-opts$groupB <- c("Epiblast_Tet_KO")
+opts$groupA <- c("Epiblast_WT")
+opts$groupB <- c("Primitive Streak_WT")
 
 # Define FDR threshold
 opts$threshold_fdr <- 0.01
@@ -46,11 +46,10 @@ opts$min.logFC <- 1.0
 
 # Define which cells to use
 opts$cells <- fread(io$sample_metadata) %>% 
-  .[,lineage:=lineage10x_2] %>% 
-  .[,lineage_phenotype:=paste(lineage,phenotype,sep="_")] %>%
-  .[culture%in%c("EB_Day2")] %>%
+  .[,lineage_genotype:=paste(lineage10x_2,genotype,sep="_")] %>%
+  .[day%in%c("Day2","Day4","Day5","Day6","Day7")] %>%
   # .[pass_rnaQC==T & lineage%in%c(opts$groupA,opts$groupB),id_rna]
-  .[pass_rnaQC==T & lineage_phenotype%in%c(opts$groupA,opts$groupB),id_rna]
+  .[pass_rnaQC==T & lineage_genotype%in%c(opts$groupA,opts$groupB),id_rna]
 
 ###############
 ## Load data ##
@@ -60,18 +59,16 @@ opts$cells <- fread(io$sample_metadata) %>%
 sample_metadata <- fread(io$sample_metadata) %>% 
   .[id_rna %in% opts$cells] %>% 
   .[,lineage:=lineage10x_2] %>%
-  .[,lineage_phenotype:=paste(lineage,phenotype,sep="_")] 
+  .[,lineage_genotype:=paste(lineage,genotype,sep="_")] 
 
 # Load SingleCellExperiment object
 sce <- readRDS(io$rna.infile)[,opts$cells]
 sce$lineage <- sample_metadata$lineage
-sce$lineage_phenotype <- sample_metadata$lineage_phenotype
+sce$lineage_genotype <- sample_metadata$lineage_genotype
 
 # Define the two exclusive groups
-# sample_metadata[,group:=as.factor(as.numeric(lineage%in%opts$groupB))]
-# sce$group <- as.factor(as.numeric(sce$lineage%in%opts$groupB))
-sample_metadata[,group:=as.factor(as.numeric(lineage_phenotype%in%opts$groupB))]
-sce$group <- as.factor(as.numeric(sce$lineage_phenotype%in%opts$groupB))
+sample_metadata[,group:=as.factor(as.numeric(lineage_genotype%in%opts$groupB))]
+sce$group <- as.factor(as.numeric(sce$lineage_genotype%in%opts$groupB))
 
 # Load gene metadata
 gene_metadata <- rowData(sce) %>% as.data.frame(row.names=rownames(sce)) %>% 
@@ -85,7 +82,7 @@ gene_metadata[,c("symbol","id"):=list(as.factor(symbol),as.factor(id))]
 ################################################
 
 out <- doDiffExpr(sce, sample_metadata) %>%
-  merge(gene_metadata, all.y=T, by=c("id")) %>% setorderv("padj_fdr", na.last=T)
+  merge(gene_metadata, all.y=T, by="id") %>% setorderv("padj_fdr", na.last=T)
 
 ##################
 ## Save results ##

@@ -3,9 +3,9 @@
 io <- list()
 io$basedir <- "/Users/ricard/data/NMT-seq_EB+ESC"
 io$in.metadata <- paste0(io$basedir,"/sample_metadata.txt")
-io$in.data <- paste0(io$basedir,"/met/feature_level")
+io$in.data <- paste0(io$basedir,"/acc/feature_level")
 io$in.features  <- "/Users/ricard/data/NMT-seq_EB+ESC/features/filt"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/met/stats/features"
+io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/acc/stats/features"
 
 ## Define options ##
 opts <- list()
@@ -55,4 +55,4 @@ opts$cells <- fread(io$in.metadata) %>%
   .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
   .[day_lineage%in%opts$day_lineage] %>%
   .[genotype%in%opts$genotype] %>%
-  .[pass_metQC==T,id_met]
+  .[pass_accQC==T,id_acc]

@@ -1,4 +1,3 @@
-
 ####################################################################
 ## Plot dimensionality reduction of EB cells mapped to the atlas ##
 ####################################################################
@@ -8,7 +7,7 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 
-source("/Users/ricard/NMT-seq_EB+ESC/rna/mapping/settings.R")
+source("/Users/ricard/scnmt_eb/rna/mapping/settings.R")
 
 #####################
 ## I/O and options ##
@@ -165,5 +164,22 @@ plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] 
 p <- plot.dimred.wtko(plot_df_atlas)
 
 pdf(paste0(io$outdir,"/pdf/umap_mapped_day67.pdf"), width=4, height=4)
+print(p)
+dev.off()
+
+## All cells ##
+plot_df_atlas[,index.wt:=match(plot_df_atlas$cell, plot_df_query[genotype=="WT",closest.cell] )]
+plot_df_atlas[,index.ko:=match(plot_df_atlas$cell, plot_df_query[genotype=="KO",closest.cell] )]
+plot_df_atlas[,mapped.wt:=c(0,-10)[as.numeric(as.factor(!is.na(index.wt)))]]
+plot_df_atlas[,mapped.ko:=c(0,10)[as.numeric(as.factor(!is.na(index.ko)))]]
+plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] %>% setorder(mapped)
+
+# overlaps <- which(plot_df_atlas$mapped.wt==(-10) & plot_df_atlas$mapped.ko==10)
+# plot_df_atlas$mapped.wt[overlaps] <- sample(x=c(0,-10), size=length(overlaps), replace=T)
+# plot_df_atlas$mapped.ko[overlaps] <- sample(x=c(0,10), size=length(overlaps), replace=T)
+
+p <- plot.dimred.wtko(plot_df_atlas)
+
+pdf(paste0(io$outdir,"/pdf/umap_mapped_alldays.pdf"), width=8, height=6.5)
 print(p)
 dev.off()

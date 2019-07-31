@@ -72,20 +72,26 @@ opts$chr_list <- c(1:19,"X","Y")
 # Annotations to analyse
 # opts$annos <- "all"
 opts$annos <- c(
-  # "CGI",
-  "H3K27ac_distal_E7.5_Ect_intersect12",
-  "H3K27ac_distal_E7.5_End_intersect12",
-  "H3K27ac_distal_E7.5_Mes_intersect12",
+  "CGI",
+  # "H3K27ac_distal_E7.5_Ect_intersect12",
+  # "H3K27ac_distal_E7.5_End_intersect12",
+  # "H3K27ac_distal_E7.5_Mes_intersect12",
   # "H3K27ac_distal_E7.5_Ect_intersect12_500",
   # "H3K27ac_distal_E7.5_End_intersect12_500",
   # "H3K27ac_distal_E7.5_Mes_intersect12_500",
   # "H3K4me3_E7.5_Ect",
   # "H3K4me3_E7.5_End",
   # "H3K4me3_E7.5_Mes",
-  "genebody",
-  "prom_2000_2000"
+  # "genebody",
+  # "prom_2000_2000"
+  "prom_2000_2000_cgi",
+  "prom_2000_2000_noncgi",
+  "LINE",
+  "LTR"
   # "window2000_step1000"
 )
+
+
 
 if (opts$annos == "all")
   opts$annos <- sapply(str_split(list.files(io$anno.folder, pattern = "\\.bed$"),"\\.bed"),"[[", 1)
