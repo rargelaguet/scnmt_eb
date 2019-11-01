@@ -1,3 +1,12 @@
+
+#########################################################
+## Script to do differential RNA expression with edgeR ##
+#########################################################
+
+####################
+## Load libraries ##
+####################
+
 suppressMessages(library(scater))
 suppressMessages(library(data.table))
 suppressMessages(library(purrr))
@@ -5,15 +14,20 @@ suppressMessages(library(ggplot2))
 suppressMessages(library(edgeR))
 suppressMessages(library(argparse))
 
+################################
 ## Initialize argument parser ##
+################################
+
 p <- ArgumentParser(description='')
-p$add_argument('-s1', '--lineage_genotype1', type="character",  nargs='+',  help='lineage_genotype 1')
-p$add_argument('-s2', '--lineage_genotype2', type="character",  nargs='+',  help='lineage_genotype 2')
+p$add_argument('-s1', '--lineage_genotype1', type="character",  nargs='+',  help='lineage_genotype A (i.e. Epiblast_WT)')
+p$add_argument('-s2', '--lineage_genotype2', type="character",  nargs='+',  help='lineage_genotype B (i.e. Mesoderm_KO)')
 p$add_argument('-o',  '--outfile',           type="character",              help='Output file')
 args <- p$parse_args(commandArgs(TRUE))
 
-
+#########
 ## I/O ##
+#########
+
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   io$basedir <- "/Users/ricard/data/NMT-seq_EB+ESC"
@@ -28,15 +42,15 @@ io$sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$rna.infile <- paste(io$basedir,"rna/SingleCellExperiment.rds",sep="/")
 io$outfile <- args$outfile
 
+#############
 ## Options ##
+#############
+
 opts <- list()
 
 # Define stage and lineage
 opts$groupA <- args$lineage_genotype1
 opts$groupB <- args$lineage_genotype2
-
-opts$groupA <- c("Epiblast_WT")
-opts$groupB <- c("Primitive Streak_WT")
 
 # Define FDR threshold
 opts$threshold_fdr <- 0.01
@@ -46,9 +60,7 @@ opts$min.logFC <- 1.0
 
 # Define which cells to use
 opts$cells <- fread(io$sample_metadata) %>% 
-  .[,lineage_genotype:=paste(lineage10x_2,genotype,sep="_")] %>%
-  .[day%in%c("Day2","Day4","Day5","Day6","Day7")] %>%
-  # .[pass_rnaQC==T & lineage%in%c(opts$groupA,opts$groupB),id_rna]
+  .[,lineage_genotype:=paste(lineage10x_2,genotype,sep="_")] %>%s
   .[pass_rnaQC==T & lineage_genotype%in%c(opts$groupA,opts$groupB),id_rna]
 
 ###############

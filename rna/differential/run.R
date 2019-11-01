@@ -21,7 +21,7 @@ opts$groups <- list(
   
   # "Epiblast_vs_Mesoderm" = list(c("Epiblast_WT"), c("Mesoderm_WT")),
   # "Epiblast_vs_Endoderm" = list(c("Epiblast_WT"), c("Endoderm_WT")),
-  "Epiblast_vs_PrimitiveStreak" = list(c("Epiblast_WT"), c("Primitive Streak_WT"))
+  # "Epiblast_vs_PrimitiveStreak" = list(c("Epiblast_WT"), c("Primitive Streak_WT"))
   # "Epiblast_vs_MesodermEndoderm" = list(c("Epiblast_WT"), c("Mesoderm_WT","Endoderm_WT")),
 
   # "Endoderm_vs_MesodermEpiblast" = list(c("Endoderm_WT"), c("Epiblast_WT","Mesoderm_WT")),

@@ -1,3 +1,9 @@
+Analysis of two data sets:
+- Clark2018: ESC 2i/serum + EB (day3)
+- Argelaguet2019 (second part of the manuscript): EB Tet WT + TKO (day2,4,5,7,6,7)
+
+Data folder is:
+/Users/ricard/data/NMT-seq_EB+ESC
 
 
 ------------------------------------------------------------------------------------------------------------

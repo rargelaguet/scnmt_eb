@@ -152,9 +152,3 @@ barplot.pub <- function(to.plot, x="lineage10x_2", colors=NULL, xlim.max=NULL) {
   
     return(p)
 }
-
-# pieplot.pub <- function(to.plot, x="lineage10x_2", colors=NULL, ...) {
-#   p <- ggpie(to.plot, "N", label = "N", fill="lineage10x_2",
-#              palette = colors, color="black", ...)
-#   return(p)
-# }

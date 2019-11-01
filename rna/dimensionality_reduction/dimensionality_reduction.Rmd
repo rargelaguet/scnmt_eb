@@ -1,5 +1,5 @@
 ---
-title: "Gastrulation: dimensionality reduction on RNA data"
+title: "EB: dimensionality reduction on RNA data"
 output: 
   BiocStyle::html_document: 
   fig_width: 10
@@ -19,14 +19,15 @@ library(umap)
 
 ## Define I/O ##
 io <- list()
-io$rna <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/SingleCellExperiment.rds"
-io$metadata.file <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/dimensionality_reduction"
+io$basedir <- "/Users/ricard/data/scnmt_eb_publication"
+io$rna <- paste0(io$basedir, "/rna/SingleCellExperiment.rds")
+io$metadata.file <- paste0(io$basedir, "/sample_metadata.txt")
+io$outdir <- paste0(io$basedir, "/rna/dimensionality_reduction")
 
 ## Define options ##
 opts <- list()
 
-# Lineage colors
+# colors for lineages
 opts$colors <- c(
   "Epiblast" = "#63B8FF",
   "Mesoderm" = "#CD3278",
@@ -44,65 +45,61 @@ opts$day_lineage <- c(
   "Day2_Primitive Streak",
   
   # Day 4/5
-  "Day4_Epiblast",
-  "Day4_Primitive Streak",
-  "Day4_Mesoderm",
-  "Day5_Epiblast",
-  "Day5_Primitive Streak",
-  "Day5_Mesoderm",
+  "Day4-5_Epiblast",
+  "Day4-5_Primitive Streak",
+  "Day4-5_Mesoderm",
   
   # Day 6/7
-  "Day6_Mesoderm",
-  "Day6_Endoderm",
-  "Day6_Blood",
-  "Day7_Mesoderm",
-  "Day7_Endoderm",
-  "Day7_Blood"
+  "Day6-7_Mesoderm",
+  "Day6-7_Endoderm",
+  "Day6-7_Blood"
 )
 
+# Use both WT and KO cells
 opts$genotype <- c(
   "WT",
   "KO"
 )
 
 opts$cells <- fread(io$metadata.file) %>% 
-  .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
+  .[,day_lineage:=paste(day2,lineage10x_2, sep="_")] %>%
   .[day_lineage%in%opts$day_lineage & genotype%in%opts$genotype] %>%
   .[pass_rnaQC==T,id_rna]
 ```
 
-<!-- Load sample metadata -->
+<!-- Load cell metadata -->
 ```{r load_metadata, echo=FALSE}
 sample_metadata <- fread(io$metadata.file) %>% 
   .[,lineage:=lineage10x_2] %>%
-  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
-  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)] %>%
   .[id_rna %in% opts$cells]
 ```
 
-<!-- Load RNA expression data --> 
+<!-- Load RNA expression data as a SingleCellExperiment object --> 
 ```{r load_data, echo=FALSE}
 sce <- readRDS(io$rna)[,opts$cells]
 stopifnot(colnames(sce)==sample_metadata$id_rna)
 
+# Add lineage information to SCE object
 sce$lineage <- sample_metadata$lineage
 ```
 
-
 <!-- Select HVG -->
 ```{r}
+
+# Use overdispersion
 # trend = scran::trendVar(sce, use.spikes = FALSE, loess.args = list(span = 0.05))
 # decomp = scran::decomposeVar(sce, fit = trend)
 # decomp = decomp[decomp$mean > 0.5,]
 # decomp$FDR = p.adjust(decomp$p.value, method = "fdr")
 # genes <- rownames(decomp)[decomp$p.value < 0.05]
 
+# Use simply the variance estimate
 genes <- names(tail(sort(apply(logcounts(sce),1,var)), n=1000))
 
 sce_filt <- sce[genes,]
 ```
 
-<!-- Regress out covariates -->
+<!-- Regress out technical covariates -->
 ```{r}
 data <- scale(t(logcounts(sce_filt)), center = T, scale = F)
 
@@ -116,15 +113,6 @@ data_regressed <- apply(data, 2, function(x) {
 <!-- PCA -->
 ```{r}
 sce_filt@reducedDims$PCA <- irlba::prcomp_irlba(data_regressed, n = 25)$x
-```
-
-```{r}
-# sce_filt@reducedDims$PCA <- sce_filt@reducedDims$PCA[,2:ncol(sce_filt@reducedDims$PCA)]
-# sce_filt@reducedDims$PCA <- sce_filt@reducedDims$PCA[,c(1,2,3,6)]
-```
-
-```{r}
-# plotPCA(sce_filt, colour_by="lineage", shape_by="culture", ncomponents=c(1,2))
 ```
 
 <!-- t-SNE -->
@@ -145,25 +133,18 @@ to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(s
     merge(sample_metadata,by="id_rna")
 
 p <- ggplot(to.plot, aes(x=V1,y=V2)) +
-  # geom_point(aes(fill=lineage), pch=21, color="black", alpha=0.9, size=1.0, stroke=0.15) +
-  # scale_fill_manual(values=opts$colors) +
   geom_point(aes(color=lineage, shape=genotype), size=2.75) +
   scale_color_manual(values=opts$colors) +
-  labs(x="UMAP Dimension 1", y="UMAP Dimension 2") +
+  labs(x="", y="") +
   guides(colour = guide_legend(override.aes = list(size=3))) +
   theme(
     axis.title = element_text(colour="black", size=rel(1.1)),
-    # axis.text = element_text(colour="black",size=rel(1.0)),
     axis.text = element_blank(),
     axis.line = element_line(colour="black", size=rel(0.9)),
     axis.ticks = element_blank(),
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    legend.position="none",
-    legend.text=element_text(size=15),
-    legend.key = element_blank(),
-    legend.title=element_blank(),
-    legend.background=element_blank(),
+    legend.position="none"
     panel.border = element_blank()
   )
 
@@ -171,6 +152,8 @@ pdf(paste0(io$outdir,"/rna_umap.pdf"), width=8, height=6.5, useDingbats = F)
 print(p)
 dev.off()
 ```
+
+<!-- Highlight marker genes -->
 
 ```{r}
 rownames(sce) <- rowData(sce)$symbol
@@ -195,8 +178,6 @@ marker_genes <- c(
   "Hbb-bh1", "Hba-a1", "Hba-x", "P2rx1"
   )
 
-# marker_genes <- c("Wnt2", "Twist1", "Aplnr", "Foxf1","Mesp1")
-
 for (i in marker_genes) {
   
   to.plot <- sce_filt@reducedDims$UMAP %>% as.data.table %>% .[,id_rna:=colnames(sce_filt)] %>%
@@ -207,7 +188,6 @@ for (i in marker_genes) {
     # geom_point(aes(color=expr), size=0.4) +
     ggrastr::geom_point_rast(aes(color=expr, shape=genotype), size=1.25) +
     viridis::scale_color_viridis() +
-    # labs(x="UMAP Dimension 1", y="UMAP Dimension 2", title=i) +
     labs(x="", y="", title=i) +
     theme_classic() +
     theme(

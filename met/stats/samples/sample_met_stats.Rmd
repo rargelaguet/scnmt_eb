@@ -1,5 +1,5 @@
 ---
-title: "Gastrulation: general methylation statistics of cells"
+title: "EB: global statistics of DNA methylation per cell"
 output:
   BiocStyle::html_document: 
     toc: false
@@ -21,16 +21,12 @@ theme_pub <- function() {
     axis.text.x = element_blank(),
     axis.text.y = element_text(colour="black",size=rel(1.3)),
     axis.ticks = element_line(colour="black"),
-    # axis.line = element_line(color="black", size=rel(0.9)),
     legend.position="top",
     legend.title = element_blank(),
     legend.direction = "horizontal",
     legend.key.width=unit(1.2,"line"),
     legend.key.height=unit(1.0,"line"),
     legend.text = element_text(size=15)
-    # panel.background = element_blank(),
-    # panel.grid = element_blank(),
-    # panel.border = element_blank()
   )
 }
 ```
@@ -39,49 +35,44 @@ theme_pub <- function() {
 
 ## Define I/O 
 io <- list()
-io$in.metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$in.data <- "/Users/ricard/data/NMT-seq_EB+ESC/met/cpg_level"
-io$annos_dir  <- "/Users/ricard/data/NMT-seq_EB+ESC/features/filt"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/met/stats/samples"
+io$basedir <- "/Users/ricard/data/scnmt_eb_publication"
+io$in.metadata <- paste0(io$basedir, "/sample_metadata.txt")
+io$in.data <- paste0(io$basedir, "/met/cpg_level")
+io$annos_dir  <- paste0(io$basedir, "/features/filt")
+io$outdir  <- paste0(io$basedir, "/met/stats/samples")
 
 ## Define options
 opts <- list()
-# opts$annos <- NULL
 
-# Define which cells to use
+# Define which lineages to use
 opts$day_lineage <- c(
+
   # Day 2
   "Day2_Epiblast",
   "Day2_Primitive Streak",
   
   # Day 4/5
-  "Day4_Epiblast",
-  "Day4_Primitive Streak",
-  "Day4_Mesoderm",
-  "Day4_Endoderm",
-  "Day5_Epiblast",
-  "Day5_Primitive Streak",
-  "Day5_Mesoderm",
-  "Day5_Endoderm",
+  "Day4-5_Epiblast",
+  "Day4-5_Primitive Streak",
+  "Day4-5_Mesoderm",
+  "Day4-5_Endoderm",
   
   # Day 6/7
-  "Day6_Endoderm",
-  "Day6_Mesoderm",
-  "Day6_Blood",
-  "Day7_Endoderm",
-  "Day7_Mesoderm",
-  "Day7_Blood"
+  "Day6-7_Endoderm",
+  "Day6-7_Mesoderm",
+  "Day6-7_Blood"
 )
 
+# Define which genotypes to use
 opts$genotype <- c(
   "WT"
   # "KO"
 )
 
+# Define which cells to use
 opts$cells <- fread(io$in.metadata) %>%
-  .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
-  .[day_lineage%in%opts$day_lineage] %>%
-  .[genotype%in%opts$genotype] %>%
+  .[,day_lineage:=paste(day2,lineage10x_2, sep="_")] %>%
+  .[day_lineage%in%opts$day_lineage & genotype%in%opts$genotype] %>%
   .[pass_metQC==T,id_met]
 ```
 
@@ -89,17 +80,7 @@ opts$cells <- fread(io$in.metadata) %>%
 ```{r}
 metadata <- fread(io$in.metadata) %>% 
   .[id_met%in%opts$cells] %>%
-  .[,lineage:=lineage10x_2] %>%
-  .[,day:=ifelse(day%in%c("Day4","Day5"),"Day45",day)] %>%
-  .[,day:=ifelse(day%in%c("Day6","Day7"),"Day67",day)]
-```
-
-<!-- Load genomic contexts metadata -->
-```{r load_genomiccontexts}
-# if (!is.null(opts$annos)) {
-#   anno_dt <- lapply(opts$annos, function(anno) fread(sprintf("%s/%s.bed",io$annos_dir,anno), stringsAsFactors=T)) %>%  
-#     rbindlist %>% setnames(c("chr","start","end","strand","id","anno"))
-# }
+  .[,lineage:=lineage10x_2]
 ```
 
 <!-- Load methylation data and filter genomic contexts -->
@@ -135,23 +116,20 @@ metadata <- fread(io$in.metadata) %>%
 # # fwrite(stats, file=paste0(io$outdir,"/sample_stats.txt"), sep="\t", row.names=F, col.names=T)
 ```
 
-
+<!-- Load pre-computed estimates -->
 ```{r read_stats, echo=FALSE}
 stats <- fread(paste0(io$outdir,"/sample_stats.txt"))
 stats <- stats %>% merge(metadata, by="id_met")
 ```
 
-<!-- Plot global methylation rates -->
+<!-- Plot global methylation rates per cell -->
 ```{r}
-# stats_filt <- stats[anno=="all"] %>%
 stats_filt <- stats %>%
-  .[,day:=factor(day,levels=c("Day2","Day45","Day67"))] %>%
-  .[,lineage:=factor(lineage,levels=c("Epiblast","Primitive Streak","Mesoderm","Blood","Endoderm"))]
+  .[,day2:=factor(day2,levels=c("Day2","Day4-5","Day6-7"))]# %>%
+  # .[,lineage:=factor(lineage,levels=c("Epiblast","Primitive Streak","Mesoderm","Blood","Endoderm"))]
 
-p <- ggplot(stats_filt, aes(x=day, y=mean)) +
+p <- ggplot(stats_filt, aes(x=day2, y=mean)) +
   geom_boxplot(alpha=0.75, fill="#F8766D", outlier.shape = NA, coef=1) +
-  # facet_wrap(~day, scales="free_x", nrow=1, space="free_x") +
-  # facet_grid(~day, scales = "free_x", space = "free_x") +
   geom_jitter(alpha=1.0, color="#F8766D") +
   coord_cartesian(ylim=c(5,95)) +
   ylab("Global methylation (%)") +
@@ -159,37 +137,11 @@ p <- ggplot(stats_filt, aes(x=day, y=mean)) +
   theme(
     strip.background = element_blank(),
     strip.text = element_blank(),
-    # axis.text.x = element_text(colour="black",size=rel(1.0), angle=30, hjust=1, vjust=1)
     axis.text.x = element_text(colour="black", size=rel(1.1))
   )
-# print(p)
-
-pdf(paste0(io$outdir,"/pdf/globalmet_stages.pdf"), width=6, height=6, useDingbats = F)
 print(p)
-dev.off()
-```
 
-```{r}
-# stats_filt <- stats %>%
-#   .[,day:=factor(day,levels=opts$day)]
-# 
-# p <- ggplot(stats_filt, aes(x=genotype, y=mean)) +
-#   geom_boxplot(alpha=0.75, fill="#F8766D", outlier.shape = NA, coef=1) +
-#   # facet_wrap(~day, scales="free_x", nrow=1, space="free_x") +
-#   facet_grid(~day, scales = "free_x", space = "free_x") +
-#   geom_jitter(alpha=1.0, color="#F8766D") +
-#   coord_cartesian(ylim=c(0,100)) +
-#   ylab("Global methylation (%)") +
-#   theme_bw() +
-#   theme_pub() +
-#   theme(
-#     strip.background = element_blank(),
-#     axis.text.x = element_text(colour="black",size=rel(1.0), angle=30, hjust=1, vjust=1)
-#   )
-# print(p)
-
-# pdf(paste0(io$outdir,"/pdf/globalmet_stages.pdf"), width=8, height=4, useDingbats = F)
+# pdf(paste0(io$outdir,"/pdf/globalmet_stages.pdf"), width=6, height=6, useDingbats = F)
 # print(p)
 # dev.off()
 ```
-

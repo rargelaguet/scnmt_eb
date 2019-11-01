@@ -1,5 +1,5 @@
 ---
-title: "Gastrulation: preprocessing and quality control on expression data"
+title: "EB data set: preprocessing and quality control of expression data"
 output:
   BiocStyle::html_document: 
     fig_width: 15
@@ -13,7 +13,7 @@ library(purrr)
 library(scater)
 library(scran)
 library(ggplot2)
-source("/Users/ricard/NMT-seq_ESC/Rutils/stats_utils.R")
+# source("/Users/ricard/NMT-seq_ESC/Rutils/stats_utils.R")
 ```
 
 ```{r define_opts, echo=FALSE, include=FALSE}
@@ -25,12 +25,12 @@ opts <- list()
 # opts$coverage_threshold <- 2e5    # Minimum library size (coverage)
 # opts$features_threshold <- 1000   # Minimum number of expressed features
 # opts$top50_threshold <- 0.75      # Maximum fraction of reads accounting for the top 50 features
+# opts$MT_threshold <- 0.25         # Maximum fraction of reads mapping to mithocondrial genes
 
 # Lenient thresholds
 opts$coverage_threshold <- 1e5    # Minimum library size (coverage)
-opts$features_threshold <- 500   # Minimum number of expressed features
+opts$features_threshold <- 500    # Minimum number of expressed features
 opts$top50_threshold <- 0.75      # Maximum fraction of reads accounting for the top 50 features
-
 opts$MT_threshold <- 0.25         # Maximum fraction of reads mapping to mithocondrial genes
 
 ## I/O ##
@@ -42,70 +42,52 @@ io$out.file <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/SingleCellExperiment.rds"
 io$out.sample_metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata2.txt"
 ```
 
-
+# Load counts
 ```{r load_data, echo=FALSE}
 counts <- fread(cmd=sprintf("zcat < %s",io$in.counts)) %>% matrix.please
 ```
 
-
+# Load cell metadata
 ```{r load_sample_metadata, echo=FALSE}
 sample_metadata <- fread(io$in.sample_metadata) %>% setkey(id_rna)
 ```
 
-<!-- Rename sample names in counts -->
-```{r}
-# colnames(counts) <- sample_metadata[colnames(counts),id_rna]
-# counts <- counts[,sample_metadata$id_rna]
-```
-
+# Load feature metadata
 ```{r load_feature_metadata, echo=FALSE}
 feature_metadata <- read.csv("/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt", sep="\t", stringsAsFactors=FALSE, quote="", header=T)
 
 # Define mithocondrial genes
 mt <- feature_metadata$symbol[feature_metadata$chr == "chrMT"]
 
-# remove duplicated genes (THIS SHOULD BE DONE WHEN CREATING THE ANNOTATION)
+# remove duplicated genes
 feature_metadata <- feature_metadata[!duplicated(feature_metadata$symbol),] %>%
   tibble::remove_rownames() %>% tibble::column_to_rownames("ens_id")
 ```
 
 <!-- Parse data -->
 ```{r parse_data}
-
 # Filter genes
-# genes <- feature_metadata[feature_metadata$symbol %in% rownames(counts),"symbol"]
-# feature_metadata <- feature_metadata[feature_metadata$symbol %in% genes,] %>% tibble::rownames_to_column("ens_id") %>% tibble::column_to_rownames("symbol")
-# counts <- counts[rownames(feature_metadata),]
-
 genes <- rownames(feature_metadata[rownames(feature_metadata) %in% rownames(counts),])
 feature_metadata <- feature_metadata[genes,]
 counts <- counts[rownames(feature_metadata),]
-
-# Filter samples
-# sample_metadata <- sample_metadata[sample_metadata$id_rna %in% colnames(counts),]
-# counts <- counts[,colnames(counts) %in% sample_metadata$id_rna]
 ```
 
 <!-- Create SingleCellExperiment object -->
 ```{r echo=FALSE}
 
-# Create featureData
-# fdata <- feature_metadata[rownames(counts),] %>% new(Class = "AnnotatedDataFrame")
-fdata <- feature_metadata[rownames(counts),] %>% GRanges()
+# Create rowData
+rowData <- feature_metadata[rownames(counts),] %>% GRanges()
 
-# Create phenoData
-# stopifnot(all(sample_metadata$id_rna%in%colnames(counts)))
+# Create colData
 sample_metadata$id_rna[!sample_metadata$id_rna%in%colnames(counts)]
-pdata <- sample_metadata %>% as.data.frame %>% 
+colData <- sample_metadata %>% as.data.frame %>% 
   tibble::remove_rownames() %>% tibble::column_to_rownames("id_rna") %>% 
   .[colnames(counts),]
 
-# create SCEset object
-# stopifnot(colnames(sce) == rownames(pdata))
-# stopifnot(rownames(sce) == rownames(fdata))
-sce <- SingleCellExperiment(assays = list(counts = as.matrix(counts)), rowData=fdata, colData=pdata)
+# create SingleCellExperiment object
+sce <- SingleCellExperiment(assays = list(counts = as.matrix(counts)), rowData=rowData, colData=colData)
 
-# Calculate quality metrics
+# Calculate QC metrics
 sce = calculateQCMetrics(sce, feature_controls=list(Mt=rownames(sce) %in% mt))
 ```
 
@@ -114,6 +96,7 @@ sce$gene_strand <- sce$strand
 sce$strand <- NULL
 ```
 
+# Do QC
 ```{r filter_samples, echo=FALSE, include=TRUE}
 # Library size
 libsize.drop <- sce$total_counts < opts$coverage_threshold
@@ -139,10 +122,6 @@ p1 <- ggplot(libsize.drop_dt, aes(x=sample, y=size)) +
   )
 print(p1)
 
-# pdf(file="/Users/ricard/NMT-seq/rebuttal/2i_vs_serum/QC/out/rna_library_size.pdf", width=10, height=7)
-# print(p1)
-# dev.off()
-
 # Number of expressed genes
 feature.drop <- sce$total_features_by_counts < opts$features_threshold
 feature.drop_dt <- data.table(
@@ -167,10 +146,6 @@ p2 <- ggplot(feature.drop_dt, aes(x=sample, y=features)) +
   )
 print(p2)
 
-# pdf(file="/Users/ricard/NMT-seq/rebuttal/2i_vs_serum/QC/out/rna_nfeatures.pdf", width=10, height=7)
-# print(p2)
-# dev.off()
-
 # Proportion of reads accounting for the top 50 features
 top50.drop <- sce$pct_counts_in_top_50_features > opts$top50_threshold*100
 top50.drop_dt <- data.table(
@@ -194,7 +169,6 @@ print(p3)
 
 ```{r, echo=FALSE, include=TRUE}
 # Remove cells that do not pass QC
-# drop.samples <- colnames(sce)[( libsize.drop | feature.drop | mt.drop | top50.drop | number.drop )]
 drop.samples <- colnames(sce)[( libsize.drop | feature.drop | top50.drop )]
 
 # Update sample metadata
@@ -209,26 +183,16 @@ sce <- calculateQCMetrics(sce)
 ```
 
 # Normalisation and log transformation
-Transcript counts are now normalised based on size factors using the convolution approach from the scran package.
-Lowly expressed genes are removed before normalisation but they are included afterwards, since they are interesting for some analysis.
 ```{r normalisation, echo=FALSE, warnings=FALSE, include=TRUE}
 
-# Remove cells with very low coverage
-sce_filt <- sce
-# sce_filt <- sce[,sce$total_features_endogenous > 1000]
 
 # Temporarily remove the lowly expressed genes
-# sce$gene_strand <- sce$strand
-# sce$strand <- NULL
-# rowData(sce)$strand <- NULL
-# rowData(sce)$gene_strand <- NULL
+sce_filt <- sce
 sce_filt <- sce_filt[!(rowMeans(counts(sce)) <= 1 | rowData(sce)$pct_dropout_by_counts > 90),]
 
 # Compute size factors without the lowly expressed genes
-# sf = computeSumFactors(counts(sce_filt), sizes=c(10,20,30,40), positive=TRUE)
 sf = computeSumFactors(sce_filt, positive=TRUE, sf.out=T)
 
-# qplot(sf, sce_filt$total_counts, log="xy", ylab="Library size (mapped reads)", xlab="Size factor")
 ggplot(data.frame(sf=log(sf), counts=log(sce_filt$total_counts))) +
   geom_point(aes(x=sf,y=counts)) +
   labs(y="Library size (log)", x="Size factor (log)") +
@@ -258,7 +222,7 @@ ggplot(foo, aes(x=mean, y=sd)) +
   xlab('Mean') + ylab('Standard deviation')
 ```
 
-<!-- Save SCESet object -->
+<!-- Save SingleCellExperiment object -->
 ```{r save, echo=FALSE, include=FALSE}
-saveRDS(sce,io$out.file)
+saveRDS(sce, io$out.file)
 ```

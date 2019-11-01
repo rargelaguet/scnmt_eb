@@ -13,10 +13,6 @@ io$annos_dir <- paste0(io$basedir,"/features/filt")
 io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
 io$outdir <- "/Users/ricard/NMT-seq_EB+ESC/metacc/profiles/out"
 
-# Folders with the differential analysis results
-# io$diff.met <- paste0(io$basedir,"/met/differential/feature_level")
-# io$diff.acc <- paste0(io$basedir,"/acc/differential/feature_level")
-
 # Folders with the global statistics per cell
 io$met.stats <- paste0(io$basedir,"/met/stats/samples/sample_stats.txt")
 io$acc.stats <- paste0(io$basedir,"/acc/stats/samples/sample_stats.txt")
@@ -38,42 +34,28 @@ opts$positions <- c(
   "H3K27ac_distal_E7.5_Mes_intersect12"="center",
   "H3K27ac_distal_E7.5_End_intersect12"="center"
 )
+
+# Define window size 
 opts$window_size <- 2000
 opts$met.tile <- 200
 opts$acc.tile <- 150
-
-
-
-# How to select differential hits?
-#   Option 1 (more liberal): (lineage_A) vs (lineage_B,lineage_C)
-#   Option 2 (more conservative): (lineage_A vs lineage_B) AND (lineageA vs lineage_C)
-# opts$diff.type <- 2
-# opts$min.fdr <- 0.10
-# opts$min.met.diff <- 5
-# opts$min.acc.diff <- 5
-
 
 # Define which cells to use
 opts$day_lineage <- c(
   # Day 2
   "Day2_Epiblast",
-  # "Day2_Primitive Streak",
   
   # Day 4/5
-  "Day4_Epiblast",
-  "Day4_Primitive Streak",
-  "Day4_Mesoderm",
-  "Day5_Epiblast",
-  "Day5_Primitive Streak",
-  "Day5_Mesoderm",
+  "Day4-5_Epiblast",
+  "Day4-5_Primitive Streak",
+  "Day4-5_Mesoderm",
   
   # Day 6/7
-  "Day6_Primitive Streak",
-  "Day6_Mesoderm",
-  "Day7_Primitive Streak",
-  "Day7_Mesoderm"
+  "Day6-7_Primitive Streak",
+  "Day6-7_Primitive Streak"
 )
 
+# Define which genotypes to use
 opts$genotype <- c(
   "WT"
   # "KO"

@@ -1,5 +1,5 @@
 ---
-title: "Gastrulation NMT-seq: quality control of accessibility data"
+title: "EB NMT-seq: quality control of accessibility data"
 output: 
   BiocStyle::html_document: 
     fig_width: 10
@@ -19,10 +19,8 @@ library(cowplot)
 barplot_theme <- function() {
   p <- theme(
     plot.title = element_text(size=30, hjust=0.5),
-    # axis.title.x = element_text(colour="black", size=25, vjust=1.5),
     axis.title.x = element_blank(),
     axis.title.y = element_text(colour="black", size=20),
-    # axis.text.x = element_text(colour="black",size=rel(1.6)),
     axis.text.y = element_text(colour="black",size=rel(1.5)),
     axis.line = element_line(colour="black", size=rel(0.7)),
     axis.ticks.x = element_line(colour="black", size=rel(0.7)),
@@ -51,9 +49,9 @@ opts$cells <- fread(io$sample.metadata) %>%
   .[!is.na(id_acc),id_acc]
 
 # Filtering options
-opts$acc_coverage_threshold <- 5e5
-opts$acc_mean_threshold.bottom <- 10
-opts$acc_mean_threshold.top <- 40
+opts$acc_coverage_threshold <- 5e5     # Number of observed GpC sites
+opts$acc_mean_threshold.bottom <- 10   # Minimum global accessibility rate
+opts$acc_mean_threshold.top <- 40      # Maximum global accessibility rate
 ```
 
 <!-- Load sample metadata -->
@@ -91,12 +89,13 @@ stats <- stats[!is.na(coverage)]
 # stats <- stats[,mean:=ifelse(mean>100,mean/100,mean)]
 ```
 
-<!-- Load statistics -->
+<!-- Load pre-coomputed statistics -->
 ```{r read_stats, echo=FALSE}
 fwrite(stats,file=paste0(io$outdir,"/sample_stats.txt"), sep="\t", row.names=F, col.names=T)
 stats <- fread(paste0(io$outdir,"/sample_stats.txt"))
 ```
 
+<!-- Merge cell stats with sample metadata -->
 ```{r}
 stats <- stats %>% merge(metadata,by="id_acc")
 ```
@@ -158,6 +157,7 @@ failqc <- stats[coverage<opts$acc_coverage_threshold | (mean<opts$acc_mean_thres
 # print(sort(failqc))
 ```
 
+<!-- Update sample metadata -->
 ```{r}
 sample_metadata_updated <- fread(io$sample.metadata)
 table(sample_metadata_updated$pass_accQC)
