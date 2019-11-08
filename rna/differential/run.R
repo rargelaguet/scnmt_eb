@@ -6,11 +6,11 @@
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   io$script <- "/Users/ricard/scnmt_eb/rna/differential/differential_expr.R"
-  io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/differential"; dir.create(io$outdir)
+  io$outdir <- "/Users/ricard/data/scnmt_eb/rna/differential"; dir.create(io$outdir)
 } else {
   io$script <- "/homes/ricard/scnmt_eb/rna/differential/differential_expr.R"
-  io$outdir <- "/hps/nobackup/stegle/users/ricard/NMT-seq_EB+ESC/rna/differential"; dir.create(io$outdir, showWarnings=F)
-  io$tmpdir <- "/hps/nobackup/stegle/users/ricard/NMT-seq_EB+ESC/rna/differential/tmp"; dir.create(io$tmpdir, showWarnings=F)
+  io$outdir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb/rna/differential"; dir.create(io$outdir, showWarnings=F)
+  io$tmpdir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb/rna/differential/tmp"; dir.create(io$tmpdir, showWarnings=F)
 }
 
 

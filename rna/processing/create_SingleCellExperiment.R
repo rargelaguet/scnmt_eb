@@ -36,10 +36,10 @@ opts$MT_threshold <- 0.25         # Maximum fraction of reads mapping to mithoco
 ## I/O ##
 io <- list()
 io$in.gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-io$in.sample_metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$in.counts <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/counts.txt.gz"
-io$out.file <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/SingleCellExperiment.rds"
-io$out.sample_metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata2.txt"
+io$in.sample_metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
+io$in.counts <- "/Users/ricard/data/scnmt_eb/rna/counts.txt.gz"
+io$out.file <- "/Users/ricard/data/scnmt_eb/rna/SingleCellExperiment.rds"
+io$out.sample_metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
 ```
 
 # Load counts

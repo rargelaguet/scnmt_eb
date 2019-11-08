@@ -1,26 +1,30 @@
+library(data.table)
+library(purrr)
+
 #####################
 ## Define settings ##
 #####################
 
 ## Define I/O ##
 io <- list()
-io$basedir <- "/Users/ricard/data/NMT-seq_EB+ESC"
+io$basedir <- "/Users/ricard/data/scnmt_eb"
 io$sample.metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$met.dir <- paste0(io$basedir,"/met/feature_level")
 io$acc.dir <- paste0(io$basedir,"/acc/feature_level")
-io$annos_dir <- paste0(io$basedir,"/features/filt")
-io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-io$outdir <- "/Users/ricard/NMT-seq_EB+ESC/metacc/boxplots/out"
+io$annos_dir <- paste0(io$basedir,"/features/genomic_contexts")
+io$gene_metadata <- paste0(io$basedir,"/features/genes/Mmusculus_genes_BioMart.87.txt")
+io$outdir <- paste0(io$basedir,"/metacc/boxplots")
+
+# Folders with the global statistics per cell
+io$met.stats <- paste0(io$basedir,"/met/results/stats/samples/sample_stats.txt")
+io$acc.stats <- paste0(io$basedir,"/acc/results/stats/samples/sample_stats.txt")
 
 # Folders with the differential analysis results
 io$basedir2 <- "/Users/ricard/data/gastrulation"
-io$diff.met <- paste0(io$basedir2,"/met/differential/feature_level")
-io$diff.acc <- paste0(io$basedir2,"/acc/differential/feature_level")
+io$diff.met <- paste0(io$basedir2,"/met/results/differential/feature_level")
+io$diff.acc <- paste0(io$basedir2,"/acc/results/differential/feature_level")
 
 
-# Folders with the global statistics per cell
-io$met.stats <- paste0(io$basedir,"/met/stats/samples/sample_stats.txt")
-io$acc.stats <- paste0(io$basedir,"/acc/stats/samples/sample_stats.txt")
 
 ## Define options ##
 opts <- list()
@@ -57,18 +61,10 @@ opts$day_lineage <- c(
   # Day 2
   "Day2_Epiblast",
   "Day2_Primitive Streak",
-  
-  # Day 4/5
-  # "Day4_Epiblast",
-  # "Day4_Primitive Streak",
-  # "Day4_Mesoderm",
-  # "Day5_Epiblast",
-  # "Day5_Primitive Streak",
-  # "Day5_Mesoderm",
-  
+
   # Day 6/7
-  "Day6_Mesoderm",
-  "Day7_Mesoderm"
+  "Day6-7_Mesoderm"
+  # "Day6-7_Blood"
 )
 
 opts$genotype <- c(
@@ -76,22 +72,7 @@ opts$genotype <- c(
   "KO"
 )
 
-# Define colors
-opts$lineage.colors <- c(
-  Epiblast="#63B8FF",
-  EB_Day0_Epiblast="#63B8FF",
-  EB_Day3_Epiblast="#63B8FF",
-  EB_Day5_Epiblast="#63B8FF",
-  EB_Day6_Epiblast="#63B8FF",
-  EB_Day7_Epiblast="#63B8FF",
-  "Primitive Streak"="sandybrown",
-  Mesoderm="#CD3278",
-  Blood="#CD3278",
-  Endoderm="#43CD80",
-  Ectoderm="steelblue",
-  "Epi/PS"="steelblue"
-)
-
+# Define genomic context colors
 opts$enhancer.colors <- c(
   "Mesoderm enhancers"="#CD3278",
   "Endoderm enhancers"="#43CD80",
@@ -100,16 +81,17 @@ opts$enhancer.colors <- c(
   "Gene bodies"="gray70"
 )
 
+# Define which cells to use
 tmp <- fread(io$sample.metadata) %>%
-  .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
+  .[,day_lineage:=paste(day2,lineage10x_2, sep="_")] %>%
   .[day_lineage%in%opts$day_lineage] %>%
   .[genotype%in%opts$genotype]
 opts$met_cells <- tmp %>% .[pass_metQC==T, id_met]
 opts$acc_cells <- tmp %>% .[pass_accQC==T, id_acc]
 
+# Load sample metadata
 sample_metadata <- fread(io$sample.metadata) %>%
-  .[id_met%in%opts$met_cells | id_acc %in% opts$acc_cells ] %>%
-  .[,c("sample","id_rna","id_met","id_acc","lineage10x","lineage10x_2","day","genotype")] %>%
   .[,day_lineage:=paste(day,lineage10x_2, sep="_")] %>%
-  droplevels()
+  .[,genotype:=factor(genotype, levels=c("WT","KO"))] %>%
+  .[id_met%in%opts$met_cells | id_acc %in% opts$acc_cells ]
 

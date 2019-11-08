@@ -1,8 +1,14 @@
+
+###################################################################################################
+## Script to plot differential RNA expression between lineages, comparing EB and in vivo results ##
+###################################################################################################
+
 library(data.table)
 library(purrr)
 library(ggplot2)
 library(ggpubr)
 
+# This 
 ################
 ## Define I/O ##
 ################
@@ -12,16 +18,16 @@ io <- list()
 # In vivo gastrulation data
 io$basedir.1 <- "/Users/ricard/data/gastrulation"
 io$sample_metadata.1 <- paste0(io$basedir.1,"/sample_metadata.txt")
-io$rna.file.1 <- paste(io$basedir.1,"rna/parsed/SingleCellExperiment.rds",sep="/")
-io$diff.1 <- paste(io$basedir.1,"rna/differential",sep="/")
+io$rna.file.1 <- paste(io$basedir.1,"rna/SingleCellExperiment.rds",sep="/")
+io$diff.1 <- paste(io$basedir.1,"rna/results/differential",sep="/")
 
 # In vitro EB data
-io$basedir.2 <- "/Users/ricard/data/NMT-seq_EB+ESC"
+io$basedir.2 <- "/Users/ricard/data/scnmt_eb"
 io$sample_metadata.2 <- paste0(io$basedir.2,"/sample_metadata.txt")
 io$rna.file.2 <- paste(io$basedir.2,"rna/SingleCellExperiment.rds",sep="/")
-io$diff.2 <- paste(io$basedir.2,"rna/differential",sep="/")
+io$diff.2 <- paste(io$basedir.2,"rna/results/differential",sep="/")
 
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/differential/pdf"
+io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/differential/pdf"
 
 ####################
 ## Define options ##
@@ -85,10 +91,9 @@ for (i in unique(diff$comparison)) {
     scale_color_manual(values=c("TRUE"="red", "FALSE"="grey70")) +
     labs(x="differential RNA expression (EBs)", y="differential RNA expression (in vivo)") + 
     theme(legend.position = "none")
-  # print(p)
 
-  pdf(sprintf("%s/%s.pdf",io$outdir,i), useDingbats = F, width=4, height=4)
+  # pdf(sprintf("%s/%s.pdf",io$outdir,i), useDingbats = F, width=4, height=4)
   print(p)
-  dev.off()
+  # dev.off()
   
 }

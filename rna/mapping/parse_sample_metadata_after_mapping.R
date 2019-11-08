@@ -14,8 +14,8 @@ library(purrr)
 ## I/O ##
 #########
 
-io$sample_metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$mapping <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/mapping/mapping.rds"
+io$sample_metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
+io$mapping <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/mapping.rds"
 
 ###############
 ## Load data ##

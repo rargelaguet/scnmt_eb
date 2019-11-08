@@ -9,7 +9,7 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 
-source("/Users/ricard/scnmt_eb/rna/mapping/settings.R")
+source("/Users/ricard/scnmt_eb/rna/mapping/plot/plot_settings.R")
 
 #########
 ## I/O ##
@@ -17,9 +17,9 @@ source("/Users/ricard/scnmt_eb/rna/mapping/settings.R")
 
 io <- list()
 io$path2atlas <- "/Users/ricard/data/gastrulation10x"
-io$path2query <- "/Users/ricard/data/NMT-seq_EB+ESC"
-io$mapping <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/mapping/mapping.rds"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/rna/mapping/pdf"
+io$path2query <- "/Users/ricard/data/scnmt_eb"
+io$mapping <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/mapping.rds"
+io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/pdf"
 
 #############
 ## Options ##
@@ -84,7 +84,7 @@ plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] 
 
 p <- plot.dimred.wtko(plot_df_atlas)
 
-pdf(paste0(io$outdir,"/pdf/umap_mapped_day2.pdf"), width=4, height=4)
+pdf(paste0(io$outdir,"/umap_mapped_day2.pdf"), width=4, height=4)
 print(p)
 dev.off()
 
@@ -97,7 +97,7 @@ plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] 
 
 p <- plot.dimred.wtko(plot_df_atlas)
 
-pdf(paste0(io$outdir,"/pdf/umap_mapped_day45.pdf"), width=4, height=4)
+pdf(paste0(io$outdir,"/umap_mapped_day45.pdf"), width=4, height=4)
 print(p)
 dev.off()
 
@@ -112,19 +112,19 @@ plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] 
 
 p <- plot.dimred.wtko(plot_df_atlas)
 
-pdf(paste0(io$outdir,"/pdf/umap_mapped_day67.pdf"), width=4, height=4)
+pdf(paste0(io$outdir,"/umap_mapped_day67.pdf"), width=4, height=4)
 print(p)
 dev.off()
 
-## All cells ##
-plot_df_atlas[,index.wt:=match(plot_df_atlas$cell, plot_df_query[genotype=="WT",closest.cell] )]
-plot_df_atlas[,index.ko:=match(plot_df_atlas$cell, plot_df_query[genotype=="KO",closest.cell] )]
-plot_df_atlas[,mapped.wt:=c(0,-10)[as.numeric(as.factor(!is.na(index.wt)))]]
-plot_df_atlas[,mapped.ko:=c(0,10)[as.numeric(as.factor(!is.na(index.ko)))]]
-plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] %>% setorder(mapped)
-
-p <- plot.dimred.wtko(plot_df_atlas)
-
-pdf(paste0(io$outdir,"/pdf/umap_mapped_alldays.pdf"), width=8, height=6.5)
-print(p)
-dev.off()
+## All days ##
+# plot_df_atlas[,index.wt:=match(plot_df_atlas$cell, plot_df_query[genotype=="WT",closest.cell] )]
+# plot_df_atlas[,index.ko:=match(plot_df_atlas$cell, plot_df_query[genotype=="KO",closest.cell] )]
+# plot_df_atlas[,mapped.wt:=c(0,-10)[as.numeric(as.factor(!is.na(index.wt)))]]
+# plot_df_atlas[,mapped.ko:=c(0,10)[as.numeric(as.factor(!is.na(index.ko)))]]
+# plot_df_atlas[,mapped:=factor(mapped.wt + mapped.ko, levels=c("0","-10","10"))] %>% setorder(mapped)
+# 
+# p <- plot.dimred.wtko(plot_df_atlas)
+# 
+# pdf(paste0(io$outdir,"/umap_mapped_alldays.pdf"), width=8, height=6.5)
+# print(p)
+# dev.off()

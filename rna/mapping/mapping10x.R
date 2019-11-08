@@ -11,10 +11,10 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 
-source("/Users/ricard/NMT-seq_EB+ESC/rna/mapping/10x/Mapping2gastrulationAtlas.R")
+source("/Users/ricard/scnmt_eb/rna/mapping/10x/Mapping2gastrulationAtlas.R")
 
 path2atlas <- "/Users/ricard/data/gastrulation10x"
-path2scNMT <- "/Users/ricard/data/NMT-seq_EB+ESC"
+path2scNMT <- "/Users/ricard/data/scnmt_eb"
 
 ####################
 ## Load 10x atlas ##
@@ -43,7 +43,7 @@ sce_nmt <- sce_nmt[,meta_nmt$id_rna]
 meta_scnmt <- list()
 meta_scnmt$cell <- meta_nmt$id_rna[match(colnames(sce_nmt), meta_nmt$id_rna)]
 meta_scnmt$cells <- meta_nmt$id_rna[match(colnames(sce_nmt), meta_nmt$id_rna)]
-meta_scnmt$stage <- meta_nmt$culture[match(colnames(sce_nmt), meta_nmt$id_rna)]
+meta_scnmt$stage <- meta_nmt$day[match(colnames(sce_nmt), meta_nmt$id_rna)]
 
 # Subset genes that are present in both data sets
 genes <- intersect(rownames(sce_nmt), rownames(sce_atlas))
@@ -64,5 +64,5 @@ mapping  <- mapWrap(
 ## Save ##
 ##########
 
-saveRDS(mapping, "/Users/ricard/data/NMT-seq_EB+ESC/rna/mapping/mapping.rds")
+saveRDS(mapping, "/Users/ricard/data/scnmt_eb/rna/mapping/mapping.rds")
 

@@ -104,7 +104,7 @@ sce_filt <- sce[genes,]
 data <- scale(t(logcounts(sce_filt)), center = T, scale = F)
 
 data_regressed <- apply(data, 2, function(x) {
-  # lm.out <- lm(formula=expr~ngenes+culture, data=data.frame(expr=x, ngenes=rowSums(data>0), culture=sce_filt$culture));
+  # lm.out <- lm(formula=expr~ngenes+day, data=data.frame(expr=x, ngenes=rowSums(data>0), day=sce_filt$day));
   lm.out <- lm(formula=expr~ngenes, data=data.frame(expr=x, ngenes=rowSums(data>0)));
   residuals <- lm.out[["residuals"]]+lm.out[["coefficients"]][1]
 })

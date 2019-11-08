@@ -152,3 +152,4 @@ barplot.pub <- function(to.plot, x="lineage10x_2", colors=NULL, xlim.max=NULL) {
   
     return(p)
 }
+

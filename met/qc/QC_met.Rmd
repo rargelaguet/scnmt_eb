@@ -39,9 +39,9 @@ barplot_theme <- function() {
 
 ## I/O ##
 io <- list()
-io$sample.metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$in.metdir <- "/Users/ricard/data/NMT-seq_EB+ESC/met/cpg_level"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/met/stats/samples"
+io$sample.metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
+io$in.metdir <- "/Users/ricard/data/scnmt_eb/met/cpg_level"
+io$outdir <- "/Users/ricard/data/scnmt_eb/met/stats/samples"
 
 ## Options ##
 opts <- list()

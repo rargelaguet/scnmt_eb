@@ -30,11 +30,11 @@ args <- p$parse_args(commandArgs(TRUE))
 
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/NMT-seq_EB+ESC"
+  io$basedir <- "/Users/ricard/data/scnmt_eb"
   io$gene.metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   source("/Users/ricard/gastrulation/rna/differential/utils.R")
 } else {
-  io$basedir <- "/hps/nobackup/stegle/users/ricard/NMT-seq_EB+ESC"
+  io$basedir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb"
   io$gene.metadata <- "/hps/nobackup/stegle/users/ricard/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   source("/homes/ricard/gastrulation/rna/differential/utils.R")
 }

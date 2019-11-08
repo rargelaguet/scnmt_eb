@@ -1,11 +1,11 @@
 
 ## Define I/O ##
 io <- list()
-io$basedir <- "/Users/ricard/data/NMT-seq_EB+ESC"
+io$basedir <- "/Users/ricard/data/scnmt_eb"
 io$in.metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$in.data <- paste0(io$basedir,"/met/feature_level")
-io$in.features  <- "/Users/ricard/data/NMT-seq_EB+ESC/features/filt"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/met/stats/features"
+io$in.features  <- "/Users/ricard/data/scnmt_eb/features/genomic_contexts"
+io$outdir <- "/Users/ricard/data/scnmt_eb/met/stats/features"
 
 ## Define options ##
 opts <- list()

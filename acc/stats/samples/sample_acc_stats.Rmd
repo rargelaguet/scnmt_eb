@@ -38,7 +38,7 @@ theme_pub <- function() {
 io$basedir <- "/Users/ricard/data/scnmt_eb_publication"
 io$in.metadata <- paste0(io$basedir, "/sample_metadata.txt")
 io$in.data <- paste0(io$basedir, "/acc/gpc_level")
-io$annos_dir  <- paste0(io$basedir, "/features/filt")
+io$annos_dir  <- paste0(io$basedir, "/features/genomic_contexts")
 io$outdir  <- paste0(io$basedir, "/acc/stats/samples")
 
 ## Define options

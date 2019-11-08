@@ -3,7 +3,7 @@ Analysis of two data sets:
 - Argelaguet2019 (second part of the manuscript): EB Tet WT + TKO (day2,4,5,7,6,7)
 
 Data folder is:
-/Users/ricard/data/NMT-seq_EB+ESC
+/Users/ricard/data/scnmt_eb
 
 
 ------------------------------------------------------------------------------------------------------------

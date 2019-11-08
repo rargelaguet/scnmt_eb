@@ -1,0 +1,153 @@
+---
+title: "EB scNMT-seq: boxplots of (normalised) DNA methylation and chromatin accessibility in lineage-defining enhancers"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(ggpubr)
+```
+
+```{r load_modules, echo=FALSE, include=FALSE}
+theme_pb <- function() {
+  theme(
+    plot.title = element_text(size=rel(1.2), color="black", hjust=0.5),
+    # axis.text.x = element_text(size=rel(1.4), color="black", angle=50, vjust=1, hjust=1),
+    axis.text.x = element_text(size=rel(1.4), color="black"),
+    axis.text.y = element_text(size=rel(1.2), color="black"),
+    axis.title.y = element_text(size=rel(1.4), color="black"),
+    strip.background = element_rect(fill="#F37A71"),
+    strip.text = element_text(size=rel(0.9), color="black"),
+    # strip.text.x = element_text(size=rel(1.45), color="black"),
+    legend.position="top",
+    legend.title = element_blank()
+  )
+}
+```
+
+<!-- Define I/O and options -->
+```{r define_opts, echo=FALSE}
+source("/Users/ricard/scnmt_eb/metacc/boxplots_enhancers/load_settings.R")
+```
+
+<!-- Load methylation data -->
+```{r load_data, echo=FALSE, include=FALSE}
+met_dt <- lapply(names(opts$met.annos), function(n) {
+  fread(sprintf("%s/%s.tsv.gz",io$met.dir,n)) %>% .[id_met%in%opts$met_cells]
+}) %>% rbindlist %>% setnames(c("id_met","id","anno","Nmet","Ntotal","rate"))
+```
+
+<!-- Load accessibility data -->
+```{r load_data, echo=FALSE, include=FALSE}
+acc_dt <- lapply(names(opts$acc.annos), function(n) {
+  fread(sprintf("%s/%s.tsv.gz",io$acc.dir,n)) %>% .[id_acc%in%opts$acc_cells]
+}) %>% rbindlist %>% setnames(c("id_acc","id","anno","Nmet","Ntotal","rate"))
+```
+
+<!-- Merge data with metadata -->
+```{r merge}
+acc_dt <- merge(acc_dt, sample_metadata, by="id_acc")
+met_dt <- merge(met_dt, sample_metadata, by="id_met")
+```
+
+<!-- Load genome-wide global methylation and accessibility rates -->
+```{r}
+met.stats <- fread(io$met.stats) %>% .[,c("id_met","mean")] %>%
+  merge(sample_metadata, by="id_met") %>% .[,context:="CG"] 
+
+acc.stats <- fread(io$acc.stats) %>% .[,c("id_acc","mean")] %>%
+  merge(sample_metadata, by="id_acc") %>% .[,context:="GC"]
+
+stats <- rbind(
+  met.stats[,c("sample","mean","context")],
+  acc.stats[,c("sample","mean","context")]
+) %>% merge(sample_metadata,by="sample") %>%
+  .[,.(mean=mean(mean)),by=c("lineage10x_2","day2","context","genotype")]
+```
+
+<!-- Methylation Boxplots -->
+
+```{r}
+foo.met <- met_dt %>%
+  .[,.(rate=100*(sum(Nmet)/sum(Ntotal))),by=c("id_met","anno","genotype","day2")] %>%
+    merge(fread(io$met.stats)[,c("id_met","mean")], by="id_met") %>%
+  .[,norm_rate:=rate/mean] %>% 
+  .[,anno:=stringr::str_replace_all(anno,opts$met.annos)]
+```
+
+```{r}
+p.met <- list()
+for (i in unique(foo.met$day2)) {
+  
+  p.met[[i]] <- ggplot(foo.met[day2==i], aes(x=interaction(genotype), y=norm_rate)) +
+    geom_point(aes(color=anno), size=0.75) +
+    geom_violin(aes(fill=anno), alpha=0.5, size=0.25) +
+    geom_boxplot(aes(fill=anno), alpha=0.5, outlier.shape=NA, width=0.15, size=0.25) +
+    
+    stat_compare_means(aes(label = paste0("p = ", ..p.format..)), method="t.test", comparisons=list(c("WT","KO"))) +
+    geom_hline(yintercept=1, linetype="dashed", alpha=0.75, size=0.5) +
+    
+    scale_fill_manual(values=opts$enhancer.colors) +
+    scale_color_manual(values=opts$enhancer.colors) +
+    labs(x="", y="Methylation (%)") +
+    facet_wrap(~anno, nrow=1, scales="fixed") +
+    coord_cartesian(ylim=c(0.5,1.24)) +
+    theme_classic() + guides(color=F, fill=F) +
+    theme_pb() +
+    theme(
+      axis.text.x = element_blank(),
+      strip.background = element_rect(fill="#F37A71")
+      )
+  print(p.met[[i]])
+  
+  # pdf(sprintf("%s/boxplots_%s_met.pdf",io$outdir,i), width=8, height=5)
+  # print(p.met[[i]])
+  # dev.off()
+}
+```
+
+<!-- Acessibility boxplots -->
+```{r}
+foo.acc <- acc_dt %>%
+  .[,.(rate=100*(sum(Nmet)/sum(Ntotal))),by=c("id_acc","anno","genotype","day2")] %>%
+  merge(fread(io$acc.stats)[,c("id_acc","mean")], by="id_acc") %>% 
+  .[,norm_rate:=rate/mean] %>% 
+  .[,anno:=stringr::str_replace_all(anno,opts$acc.annos)]
+```
+
+
+```{r}
+p.acc <- list()
+for (i in unique(foo.acc$day2)) {
+  
+  p.acc[[i]] <- ggplot(foo.acc[day2==i], aes(x=interaction(genotype), y=norm_rate)) +
+    geom_point(aes(color=anno), size=0.75) +
+    geom_violin(aes(fill=anno), alpha=0.5, size=0.25) +
+    geom_boxplot(aes(fill=anno), alpha=0.5, outlier.shape=NA, width=0.15, size=0.25) +
+    
+    stat_compare_means(aes(label = paste0("p = ", ..p.format..)), method="t.test", comparisons=list(c("WT","KO"))) +
+    geom_hline(yintercept=1, linetype="dashed", alpha=0.75, size=0.5) +
+    
+    scale_fill_manual(values=opts$enhancer.colors) +
+    scale_color_manual(values=opts$enhancer.colors) +
+    labs(x="", y="Accessibility (%)") +
+    facet_wrap(~anno, nrow=1, scales="fixed") +
+    coord_cartesian(ylim=c(1.0,1.78)) +
+    theme_classic() + guides(color=F, fill=F) +
+    theme_pb() +
+    theme(
+      strip.background = element_rect(fill="#00BFC4")
+      )
+  print(p.acc[[i]])
+  
+  # pdf(sprintf("%s/boxplots_%s_acc.pdf",io$outdir,i), width=8, height=5)
+  # print(p.acc[[i]])
+  # dev.off()
+}
+```

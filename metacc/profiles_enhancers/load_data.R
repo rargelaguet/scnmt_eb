@@ -1,8 +1,11 @@
 
-# Load methylation data
+###########################
+## Load methylation data ##
+###########################
+
 met_list <- list()
 for (cell in opts$met.cells) {
-  tmp <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$met.dir,cell), showProgress=F, stringsAsFactors=F)
+  tmp <- fread(sprintf("%s/%s.tsv.gz",io$met.dir,cell))
     
   if (ncol(tmp)==3) {
     tmp <- tmp %>% setnames(c("chr","pos","rate"))
@@ -24,10 +27,13 @@ met <- rbindlist(met_list) %>%
   
 rm(met_list)
 
-# Load accessibility data
+#############################
+## Load accessibility data ##
+#############################
+
 acc_list <- list()
 for (cell in opts$acc.cells) {
-  tmp <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$acc.dir,cell), showProgress=F, stringsAsFactors=F) 
+  tmp <- fread(sprintf("%s/%s.tsv.gz",io$acc.dir,cell)) 
   
   if (ncol(tmp)==3) {
     tmp <- tmp %>% setnames(c("chr","pos","rate"))
@@ -49,4 +55,3 @@ acc <- rbindlist(acc_list) %>%
   .[,c("id_acc","id","context"):=list(as.factor(id_acc),as.factor(id),"GC")]
   
 rm(acc_list)
-

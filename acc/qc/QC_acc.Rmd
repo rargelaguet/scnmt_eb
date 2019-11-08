@@ -37,9 +37,9 @@ barplot_theme <- function() {
 
 ## I/O ##
 io <- list()
-io$sample.metadata <- "/Users/ricard/data/NMT-seq_EB+ESC/sample_metadata.txt"
-io$in.accdir <- "/Users/ricard/data/NMT-seq_EB+ESC/acc/gpc_level"
-io$outdir <- "/Users/ricard/data/NMT-seq_EB+ESC/acc/stats/samples"
+io$sample.metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
+io$acc.dir <- "/Users/ricard/data/scnmt_eb/acc/gpc_level"
+io$outdir <- "/Users/ricard/data/scnmt_eb/acc/stats/samples"
 
 ## Options ##
 opts <- list()
@@ -65,8 +65,8 @@ metadata <- fread(io$sample.metadata) %>%
 stats <- data.table(id_acc=opts$cells, coverage=0)
 
 for (cell in opts$cells) {
-  if (file.exists(sprintf("%s/%s.tsv.gz",io$in.accdir,cell))) {
-    data <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$in.accdir,cell), sep="\t", verbose=F, showProgress=F)
+  if (file.exists(sprintf("%s/%s.tsv.gz",io$acc.dir,cell))) {
+    data <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$acc.dir,cell), sep="\t", verbose=F, showProgress=F)
 
     if (ncol(data)==3) {
       data <- data %>% setnames(c("chr","pos","rate"))
