@@ -5,7 +5,7 @@
 
 ## Define I/O ##
 io <- list()
-io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+io$basedir <- "/Users/ricard/data/scnmt_eb"
 io$sample.metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$met.dir <- paste0(io$basedir,"/met/cpg_level")
 io$acc.dir <- paste0(io$basedir,"/acc/gpc_level")

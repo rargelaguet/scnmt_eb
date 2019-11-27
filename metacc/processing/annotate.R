@@ -34,7 +34,7 @@ stopifnot(opts$context %in% c("CG","GC"))
 
 ## Own computer ##
 if (grepl("C02RF23NFVH8",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+  io$basedir <- "/Users/ricard/data/scnmt_eb"
   
   # GC
   if (opts$context == "GC") {

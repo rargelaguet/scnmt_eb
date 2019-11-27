@@ -15,8 +15,8 @@ source("/Users/C02RF23NFVH8/scnmt_eb/rna/mapping/plot/plot_settings.R")
 ################
 
 io <- list()
-io$sample_metadata <- "/Users/C02RF23NFVH8/data/scnmt_eb/sample_metadata.txt"
-io$outdir <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/results/mapping/pdf"
+io$sample_metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
+io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/pdf"
 
 ####################
 ## Define options ##

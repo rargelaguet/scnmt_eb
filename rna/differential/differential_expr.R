@@ -30,8 +30,8 @@ args <- p$parse_args(commandArgs(TRUE))
 
 io <- list()
 if (grepl("C02RF23NFVH8",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
-  io$gene.metadata <- "/Users/C02RF23NFVH8/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
+  io$basedir <- "/Users/ricard/data/scnmt_eb"
+  io$gene.metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   source("/Users/C02RF23NFVH8/gastrulation/rna/differential/utils.R")
 } else {
   io$basedir <- "/hps/nobackup/stegle/users/C02RF23NFVH8/scnmt_eb"

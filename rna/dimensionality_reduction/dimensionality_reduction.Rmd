@@ -19,7 +19,7 @@ library(umap)
 
 ## Define I/O ##
 io <- list()
-io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+io$basedir <- "/Users/ricard/data/scnmt_eb"
 io$rna <- paste0(io$basedir, "/rna/SingleCellExperiment.rds")
 io$metadata.file <- paste0(io$basedir, "/sample_metadata.txt")
 io$outdir <- paste0(io$basedir, "/rna/dimensionality_reduction")

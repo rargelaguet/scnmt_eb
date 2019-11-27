@@ -6,7 +6,7 @@
 io <- list()
 if (grepl("C02RF23NFVH8",Sys.info()['nodename'])) {
   io$script <- "/Users/C02RF23NFVH8/scnmt_eb/rna/differential/differential_expr.R"
-  io$outdir <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/differential"; dir.create(io$outdir)
+  io$outdir <- "/Users/ricard/data/scnmt_eb/rna/differential"; dir.create(io$outdir)
 } else {
   io$script <- "/homes/C02RF23NFVH8/scnmt_eb/rna/differential/differential_expr.R"
   io$outdir <- "/hps/nobackup/stegle/users/C02RF23NFVH8/scnmt_eb/rna/differential"; dir.create(io$outdir, showWarnings=F)

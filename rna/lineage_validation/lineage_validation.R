@@ -16,18 +16,18 @@ library(ggpubr)
 io <- list()
 
 # In vivo gastrulation data
-io$basedir.1 <- "/Users/C02RF23NFVH8/data/gastrulation"
+io$basedir.1 <- "/Users/ricard/data/gastrulation"
 io$sample_metadata.1 <- paste0(io$basedir.1,"/sample_metadata.txt")
 io$rna.file.1 <- paste(io$basedir.1,"rna/SingleCellExperiment.rds",sep="/")
 io$diff.1 <- paste(io$basedir.1,"rna/results/differential",sep="/")
 
 # In vitro EB data
-io$basedir.2 <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+io$basedir.2 <- "/Users/ricard/data/scnmt_eb"
 io$sample_metadata.2 <- paste0(io$basedir.2,"/sample_metadata.txt")
 io$rna.file.2 <- paste(io$basedir.2,"rna/SingleCellExperiment.rds",sep="/")
 io$diff.2 <- paste(io$basedir.2,"rna/results/differential",sep="/")
 
-io$outdir <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/results/differential/pdf"
+io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/differential/pdf"
 
 ####################
 ## Define options ##
