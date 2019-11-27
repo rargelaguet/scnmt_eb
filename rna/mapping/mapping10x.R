@@ -11,10 +11,10 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 
-source("/Users/ricard/scnmt_eb/rna/mapping/10x/Mapping2gastrulationAtlas.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/rna/mapping/10x/Mapping2gastrulationAtlas.R")
 
-path2atlas <- "/Users/ricard/data/gastrulation10x"
-path2scNMT <- "/Users/ricard/data/scnmt_eb"
+path2atlas <- "/Users/C02RF23NFVH8/data/gastrulation10x"
+path2scNMT <- "/Users/C02RF23NFVH8/data/scnmt_eb"
 
 ####################
 ## Load 10x atlas ##
@@ -64,5 +64,5 @@ mapping  <- mapWrap(
 ## Save ##
 ##########
 
-saveRDS(mapping, "/Users/ricard/data/scnmt_eb/rna/mapping/mapping.rds")
+saveRDS(mapping, "/Users/C02RF23NFVH8/data/scnmt_eb/rna/mapping/mapping.rds")
 

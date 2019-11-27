@@ -33,7 +33,7 @@ theme_pb <- function() {
 
 <!-- Define I/O and options -->
 ```{r define_opts, echo=FALSE}
-source("/Users/ricard/scnmt_eb/metacc/boxplots_enhancers/load_settings.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/metacc/boxplots_enhancers/load_settings.R")
 ```
 
 <!-- Load methylation data -->

@@ -9,17 +9,17 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 
-source("/Users/ricard/scnmt_eb/rna/mapping/plot/plot_settings.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/rna/mapping/plot/plot_settings.R")
 
 #########
 ## I/O ##
 #########
 
 io <- list()
-io$path2atlas <- "/Users/ricard/data/gastrulation10x"
-io$path2query <- "/Users/ricard/data/scnmt_eb"
-io$mapping <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/mapping.rds"
-io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/pdf"
+io$path2atlas <- "/Users/C02RF23NFVH8/data/gastrulation10x"
+io$path2query <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+io$mapping <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/results/mapping/mapping.rds"
+io$outdir <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/results/mapping/pdf"
 
 #############
 ## Options ##

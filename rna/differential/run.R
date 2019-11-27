@@ -4,13 +4,13 @@
 
 ## I/O ##
 io <- list()
-if (grepl("ricard",Sys.info()['nodename'])) {
-  io$script <- "/Users/ricard/scnmt_eb/rna/differential/differential_expr.R"
-  io$outdir <- "/Users/ricard/data/scnmt_eb/rna/differential"; dir.create(io$outdir)
+if (grepl("C02RF23NFVH8",Sys.info()['nodename'])) {
+  io$script <- "/Users/C02RF23NFVH8/scnmt_eb/rna/differential/differential_expr.R"
+  io$outdir <- "/Users/C02RF23NFVH8/data/scnmt_eb/rna/differential"; dir.create(io$outdir)
 } else {
-  io$script <- "/homes/ricard/scnmt_eb/rna/differential/differential_expr.R"
-  io$outdir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb/rna/differential"; dir.create(io$outdir, showWarnings=F)
-  io$tmpdir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb/rna/differential/tmp"; dir.create(io$tmpdir, showWarnings=F)
+  io$script <- "/homes/C02RF23NFVH8/scnmt_eb/rna/differential/differential_expr.R"
+  io$outdir <- "/hps/nobackup/stegle/users/C02RF23NFVH8/scnmt_eb/rna/differential"; dir.create(io$outdir, showWarnings=F)
+  io$tmpdir <- "/hps/nobackup/stegle/users/C02RF23NFVH8/scnmt_eb/rna/differential/tmp"; dir.create(io$tmpdir, showWarnings=F)
 }
 
 

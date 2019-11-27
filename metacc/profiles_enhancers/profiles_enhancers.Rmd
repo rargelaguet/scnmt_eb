@@ -14,7 +14,7 @@ library(ggplot2)
 
 <!-- Define I/O and options -->
 ```{r define_options, echo=FALSE}
-source("/Users/ricard/scnmt_eb/metacc/profiles_enhancers/load_settings.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/metacc/profiles_enhancers/load_settings.R")
 ```
 
 <!-- Load sample metadata -->
@@ -38,14 +38,14 @@ sample_metadata <- fread(io$sample.metadata) %>%
 
 <!-- Load genomic annotations -->
 ```{r}
-source("/Users/ricard/scnmt_eb/metacc/profiles_enhancers/load_annotations.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/metacc/profiles_enhancers/load_annotations.R")
 anno_df.met <- anno_df
 anno_df.acc <- anno_df
 ```
 
 <!-- Load data -->
 ```{r load_data, echo=FALSE}
-source("/Users/ricard/scnmt_eb/metacc/profiles_enhancers/load_data.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/metacc/profiles_enhancers/load_data.R")
 
 # Merge data with sample metadata
 data <- rbind(

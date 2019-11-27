@@ -17,7 +17,7 @@ library(RColorBrewer)
 <!-- Define I/O and options -->
 ```{r options, echo=FALSE}
 
-source("/Users/ricard/scnmt_eb/acc/stats/features/load_settings.R")
+source("/Users/C02RF23NFVH8/scnmt_eb/acc/stats/features/load_settings.R")
 ```
 
 <!-- Load accessibility data -->

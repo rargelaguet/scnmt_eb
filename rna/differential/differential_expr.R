@@ -29,14 +29,14 @@ args <- p$parse_args(commandArgs(TRUE))
 #########
 
 io <- list()
-if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/scnmt_eb"
-  io$gene.metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-  source("/Users/ricard/gastrulation/rna/differential/utils.R")
+if (grepl("C02RF23NFVH8",Sys.info()['nodename'])) {
+  io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
+  io$gene.metadata <- "/Users/C02RF23NFVH8/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
+  source("/Users/C02RF23NFVH8/gastrulation/rna/differential/utils.R")
 } else {
-  io$basedir <- "/hps/nobackup/stegle/users/ricard/scnmt_eb"
-  io$gene.metadata <- "/hps/nobackup/stegle/users/ricard/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-  source("/homes/ricard/gastrulation/rna/differential/utils.R")
+  io$basedir <- "/hps/nobackup/stegle/users/C02RF23NFVH8/scnmt_eb"
+  io$gene.metadata <- "/hps/nobackup/stegle/users/C02RF23NFVH8/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
+  source("/homes/C02RF23NFVH8/gastrulation/rna/differential/utils.R")
 }
 io$sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$rna.infile <- paste(io$basedir,"rna/SingleCellExperiment.rds",sep="/")

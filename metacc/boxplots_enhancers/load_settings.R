@@ -7,7 +7,7 @@ library(purrr)
 
 ## Define I/O ##
 io <- list()
-io$basedir <- "/Users/ricard/data/scnmt_eb"
+io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb"
 io$sample.metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$met.dir <- paste0(io$basedir,"/met/feature_level")
 io$acc.dir <- paste0(io$basedir,"/acc/feature_level")
@@ -20,7 +20,7 @@ io$met.stats <- paste0(io$basedir,"/met/results/stats/samples/sample_stats.txt")
 io$acc.stats <- paste0(io$basedir,"/acc/results/stats/samples/sample_stats.txt")
 
 # Folders with the differential analysis results
-io$basedir2 <- "/Users/ricard/data/gastrulation"
+io$basedir2 <- "/Users/C02RF23NFVH8/data/gastrulation"
 io$diff.met <- paste0(io$basedir2,"/met/results/differential/feature_level")
 io$diff.acc <- paste0(io$basedir2,"/acc/results/differential/feature_level")
 

@@ -35,7 +35,7 @@ theme_pub <- function() {
 ```{r define_opts, echo=FALSE}
 
 ## Define I/O 
-io$basedir <- "/Users/ricard/data/scnmt_eb_publication"
+io$basedir <- "/Users/C02RF23NFVH8/data/scnmt_eb_publication"
 io$in.metadata <- paste0(io$basedir, "/sample_metadata.txt")
 io$in.data <- paste0(io$basedir, "/acc/gpc_level")
 io$annos_dir  <- paste0(io$basedir, "/features/genomic_contexts")

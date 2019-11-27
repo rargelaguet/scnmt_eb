@@ -39,6 +39,6 @@ The parsed data can be downloaded [here](ftp://ftp.ebi.ac.uk/pub/databases/scnmt
 
 Contact
 -------
-* Ricard Argelaguet (ricard@ebi.ac.uk)
+* Ricard Argelaguet (C02RF23NFVH8@ebi.ac.uk)
 * Stephen Clark (stephen.clark@babraham.ac.uk)
 
