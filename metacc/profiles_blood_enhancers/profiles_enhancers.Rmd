@@ -1,0 +1,113 @@
+---
+title: "EB scNMT-seq: pseudobulked profiles of DNA methylation and chromatin accessibility in blood enhancers"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+```
+
+<!-- Define I/O and options -->
+```{r define_options, echo=FALSE}
+source("/Users/ricard/scnmt_eb/metacc/profiles_blood_enhancers/load_settings.R")
+```
+
+<!-- Load sample metadata -->
+```{r load_metadata}
+sample_metadata <- fread(io$sample.metadata) %>%
+  .[id_met%in%opts$met.cells | id_acc %in% opts$acc.cells ] %>%
+  .[,c("sample","id_met","id_acc","lineage10x_2")]
+```
+
+
+<!-- (ONLY FOR TESTING) Subset cells to reduce memory burden -->
+```{r}
+# opts$ncells <- 5
+# opts$filt.cells <- sample_metadata[,head(unique(sample),n=opts$ncells),by="lineage"] %>% .$V1
+# 
+# sample_metadata <- sample_metadata[sample %in% opts$filt.cells]
+# opts$met.cells <- sample_metadata$id_met
+# opts$acc.cells <- sample_metadata$id_acc
+```
+
+
+<!-- Load genomic annotations -->
+```{r}
+source("/Users/ricard/scnmt_eb/metacc/profiles_enhancers/load_annotations.R")
+anno_df.met <- anno_df
+anno_df.acc <- anno_df
+```
+
+<!-- Load data -->
+```{r load_data, echo=FALSE}
+source("/Users/ricard/scnmt_eb/metacc/profiles_enhancers/load_data.R")
+
+# Merge data with sample metadata
+data <- rbind(
+  met %>% merge(sample_metadata, by="id_met"), 
+  acc %>% merge(sample_metadata, by="id_acc")
+)
+```
+
+<!-- Load genome-wide global methylation and accessibility rates -->
+```{r}
+met.stats <- fread(io$met.stats) %>% .[,c("id_met","mean")] %>%
+  merge(sample_metadata[,.(sample,id_met)], by="id_met") %>% .[,context:="CG"] 
+
+acc.stats <- fread(io$acc.stats) %>% .[,c("id_acc","mean")] %>%
+  merge(sample_metadata[,.(sample,id_acc)], by="id_acc") %>% .[,context:="GC"]
+
+stats <- rbind(
+  met.stats[,c("sample","mean","context")],
+  acc.stats[,c("sample","mean","context")]
+) %>% merge(sample_metadata[,c("sample","lineage10x_2")],by="sample") %>%
+  .[,.(mean=mean(mean)),by=c("lineage10x_2","context")]
+```
+
+<!-- Load pre-computed data -->
+```{r}
+# fwrite(data, paste0(io$outdir,"/tmp.txt"))
+# data <- fread(paste0(io$outdir,"/tmp.txt.gz"))
+```
+
+<!-- Plot DNA methylation and accessibility profiles -->
+```{r}
+for (i in unique(data$lineage10x_2)) {
+  print(i)
+  
+  tmp <- data[lineage10x_2==i]
+  
+  p <- ggplot(tmp, aes(x=dist, y=rate, group=context, fill=context, color=context)) +
+    facet_wrap(~anno, nrow=1, scales="fixed") +
+    stat_summary(geom="ribbon", alpha=0.10) +
+    stat_summary(geom="line") +
+    geom_hline(yintercept=stats[context=="CG" & lineage10x_2==i,mean(mean,na.rm=T)], color="#F37A71", linetype="dashed", alpha=0.75, size=0.75) +
+    geom_hline(yintercept=stats[context=="GC" & lineage10x_2==i,mean(mean,na.rm=T)], color="#00BFC4", linetype="dashed", alpha=0.75, size=0.75) +
+    # labs(x="Distance from center (bp)", y="Rate", title=i) +
+    labs(x="", y="") +
+    coord_cartesian(ylim=c(10,90)) +
+    xlim(-opts$window_size, opts$window_size) +
+    # scale_colour_manual(values=opts$colors) +
+    guides(fill=FALSE, color=FALSE, linetype=FALSE) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_blank(),
+      axis.text.y = element_text(size=rel(1.1), colour="black"),
+      axis.title = element_text(size=rel(1.0), colour="black"),
+      axis.line = element_line(size=rel(1.0)),
+      axis.ticks = element_line(size=rel(1.3), color="black"),
+      legend.position = "top",
+      legend.direction = "horizontal"
+      # strip.text = element_blank()
+    )
+
+  pdf(file=sprintf("%s/%s.pdf",io$outdir,i), width=7, height=4)
+  print(p)
+  dev.off()
+}
+```
