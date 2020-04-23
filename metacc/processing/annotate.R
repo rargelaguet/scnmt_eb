@@ -66,9 +66,6 @@ io$in.sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 
 ## Options ##
 
-# Valid chromosomes
-opts$chr_list <- c(1:19,"X","Y")
-
 # Annotations to analyse
 # opts$annos <- "all"
 opts$annos <- c(
@@ -102,7 +99,6 @@ cat(sprintf("- Input folder for bismark files: %s\n",io$in.folder))
 cat(sprintf("- Output folder: %s\n",io$out.folder))
 cat(sprintf("- Annotations: %s\n", paste(opts$annos, collapse=" ")))
 cat(sprintf("- Number of cores: %d\n",opts$cores))
-cat(sprintf("- Valid chromosomes: %s\n",paste(opts$chr_list, collapse=" ")))
 cat(sprintf("- Annotating CG or GC?: %s\n",opts$context))
 cat("\n")
 
@@ -134,7 +130,7 @@ for (i in 1:length(opts$annos)) {
     setnames(c("chr","start","end","strand","id"))
   
   # Check that there are no weird chromosomes
-  anno_list[[i]] <- dat_anno %>% .[chr%in%opts$chr_list,] %>% setkey(chr,start,end)
+  anno_list[[i]] <- dat_anno %>% setkey(chr,start,end)
 }
 names(anno_list) <- opts$annos
 
