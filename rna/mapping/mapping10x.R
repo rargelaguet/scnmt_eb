@@ -1,39 +1,58 @@
+suppressPackageStartupMessages(library(SingleCellExperiment))
+suppressPackageStartupMessages(library(batchelor))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(purrr))
+suppressPackageStartupMessages(library(ggplot2))
 
-########################################
-## Script to do the mapping using MNN ##
-########################################
+source("/Users/ricard/scnmt_eb/rna/mapping/mapping_functions.R")
 
-# Note: the atlas data set is not provided alongside this data set. 
-# You can find the output of the mapping in the file "rna/mapping.rds".
+##############
+## Settings ##
+##############
 
-library(SingleCellExperiment)
-library(data.table)
-library(purrr)
-library(ggplot2)
+io <- list()
+io$path2atlas <- "/Users/ricard/data/gastrulation10x"
+io$path2scNMT <- "/Users/ricard/data/scnmt_eb"
+io$outdir <- "/Users/ricard/data/scnmt_eb/rna/mapping"
 
-source("/Users/ricard/scnmt_eb/rna/mapping/10x/Mapping2gastrulationAtlas.R")
+opts <- list()
+opts$atlas_stages <- c(
+  "E6.5",
+  "E6.75",
+  "E7.0",
+  "E7.25",
+  "E7.5",
+  "E7.75",
+  "E8.0",
+  "E8.25",
+  "E8.5",
+  "mixed_gastrulation"
+)
 
-path2atlas <- "/Users/ricard/data/gastrulation10x"
-path2scNMT <- "/Users/ricard/data/scnmt_eb"
 
 ####################
 ## Load 10x atlas ##
 ####################
 
-sce_atlas  <- readRDS(paste0(path2atlas, "/processed/SingleCellExperiment.rds"))
-meta_atlas <- readRDS(paste0(path2atlas, "/processed/sample_metadata.rds"))
+# Load atlas metadata
+meta_atlas <- fread(paste0(io$path2atlas,"/sample_metadata.txt.gz")) %>%
+  .[stripped==F & doublet==F & stage%in%opts$atlas_stages]
+
+# Load atlas SingleCellExperiment
+sce_atlas  <- readRDS(paste0(io$path2atlas,"/processed/SingleCellExperiment.rds"))[,meta_atlas$cell]
 
 ##########################
 ## Load scNMT-seq query ##
 ##########################
 
-sce_nmt  <- readRDS(paste0(path2scNMT, "/rna/SingleCellExperiment.rds"))
-meta_nmt <- read.table(paste0(path2scNMT, "/sample_metadata.txt"), header = TRUE, sep = "\t", stringsAsFactors = F)
-meta_nmt$stage <- meta_nmt$day
+# Load query metadata
+meta_nmt <- fread(paste0(io$path2scNMT,"/sample_metadata.txt")) %>%
+  .[pass_rnaQC==T & genotype=="WT"] %>% setnames("day","stage")
+table(meta_nmt$stage)
+table(meta_nmt$lineage10x_2)
 
-# Filter
-meta_nmt <- meta_nmt[meta_nmt$pass_rnaQC==T,]
-sce_nmt <- sce_nmt[,meta_nmt$id_rna] 
+# Load query SingleCellExperiment
+sce_nmt  <- readRDS(paste0(io$path2scNMT,"/rna/SingleCellExperiment.rds"))[,meta_nmt$id_rna]
 
 #############
 ## Prepare ## 
@@ -45,10 +64,16 @@ meta_scnmt$cell <- meta_nmt$id_rna[match(colnames(sce_nmt), meta_nmt$id_rna)]
 meta_scnmt$cells <- meta_nmt$id_rna[match(colnames(sce_nmt), meta_nmt$id_rna)]
 meta_scnmt$stage <- meta_nmt$day[match(colnames(sce_nmt), meta_nmt$id_rna)]
 
+# Filter out genes with little expression
+nmt.genes <- names(which(rowSums(counts(sce_nmt))>25))
+atlas.genes <- names(which(rowSums(counts(sce_atlas))>10))
+
 # Subset genes that are present in both data sets
-genes <- intersect(rownames(sce_nmt), rownames(sce_atlas))
+genes <- intersect(nmt.genes, atlas.genes)
 sce_nmt  <- sce_nmt[genes,]
 sce_atlas <- sce_atlas[genes,]
+
+# TO-DO: TRY COSINE NORMALISATION???
 
 #########
 ## Map ##
@@ -56,7 +81,7 @@ sce_atlas <- sce_atlas[genes,]
 
 mapping  <- mapWrap(
   atlas_sce = sce_atlas, atlas_meta = meta_atlas,
-  map_sce = sce_nmt, map_meta = meta_scnmt, 
+  query_sce = sce_nmt, query_meta = meta_scnmt, 
   k = 25
 )
 
@@ -64,5 +89,6 @@ mapping  <- mapWrap(
 ## Save ##
 ##########
 
-saveRDS(mapping, "/Users/ricard/data/scnmt_eb/rna/mapping/mapping.rds")
+saveRDS(mapping, paste0(io$outdir,"/mapping.rds"))
+fwrite(mapping$mapping, paste0(io$outdir,"/mapping.txt.gz"), sep="\t")
 

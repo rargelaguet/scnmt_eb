@@ -1,21 +1,10 @@
+##############
+## Settings ##
+##############
 
-############################################################
-## Script to add mapping information to the cell metadata ##
-############################################################
+source("/Users/ricard/scnmt_eb/settings.R")
 
-####################
-## Load libraries ##
-####################
-
-library(data.table)
-library(purrr)
-
-#########
-## I/O ##
-#########
-
-io$sample_metadata <- "/Users/ricard/data/scnmt_eb/sample_metadata.txt"
-io$mapping <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/mapping.rds"
+io$mapping <- "/Users/ricard/data/scnmt_eb/rna/mapping/old/mapping.rds"
 
 ###############
 ## Load data ##
@@ -23,6 +12,8 @@ io$mapping <- "/Users/ricard/data/scnmt_eb/rna/results/mapping/mapping.rds"
 
 # Load mapping information
 mapping <- readRDS(io$mapping)$mapping
+
+table(mapping$celltype.mapped)
 
 # Load cell metadata and remove any previous mapping information
 sample.metadata <- fread(sample_metadata.file) %>%
@@ -65,6 +56,6 @@ sample.metadata %>%
 ## Save output ##
 #################
 
-fwrite(sample.metadata, file=io$sample_metadata, sep="\t", col.names=T, row.names=F, na="NA", quote=F)
+fwrite(sample.metadata, io$sample_metadata, sep="\t", col.names=T, row.names=F, na="NA", quote=F)
 
 
