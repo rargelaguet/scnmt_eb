@@ -1,22 +1,23 @@
 library(BSgenome.Mmusculus.UCSC.mm10)
-library(data.table)
-library(purrr)
 
 ################
 ## Define I/O ##
 ################
 
-io <- list()
-if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/scnmt_eb"
-} else if (grepl("ebi",Sys.info()['nodename'])) {
-  io$basedir <- "/hps/nobackup2/research/stegle/users/ricard/scnmt_eb"
-} else {
-  stop("Computer not recognised")
-}  
-io$metadata <- paste0(io$basedir,"/sample_metadata.txt")
-io$data <- paste0(io$basedir,"/met/cpg_level")
-io$features <- paste0(io$basedir,"/features/filt")
+source("/Users/ricard/scnmt_eb/settings.R")
+stop()
+
+# io <- list()
+# if (grepl("ricard",Sys.info()['nodename'])) {
+#   io$basedir <- "/Users/ricard/data/scnmt_eb"
+# } else if (grepl("ebi",Sys.info()['nodename'])) {
+#   io$basedir <- "/hps/nobackup2/research/stegle/users/ricard/scnmt_eb"
+# } else {
+#   stop("Computer not recognised")
+# }  
+# io$metadata <- paste0(io$basedir,"/sample_metadata.txt")
+# io$data <- paste0(io$basedir,"/met/cpg_level")
+# io$features <- paste0(io$basedir,"/features/filt")
 io$outdir <- paste0(io$basedir,"/met/results/hemimethylation")
 
 ####################
@@ -46,7 +47,7 @@ opts$annos <- c(
 # opts$annos <- NULL
 
 # Define which cells to use
-opts$cells <- fread(io$metadata) %>% 
+opts$cells <- sample_metadata %>% 
   .[!is.na(id_met) & pass_metQC==TRUE,id_met]
 
 # Output lists

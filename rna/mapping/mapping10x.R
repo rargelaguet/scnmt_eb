@@ -1,19 +1,28 @@
-suppressPackageStartupMessages(library(SingleCellExperiment))
-suppressPackageStartupMessages(library(batchelor))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(purrr))
-suppressPackageStartupMessages(library(ggplot2))
-
-source("/Users/ricard/scnmt_eb/rna/mapping/mapping_functions.R")
+suppressPackageStartupMessages(library(SingleCellExperiment))
+suppressPackageStartupMessages(library(batchelor))
+suppressPackageStartupMessages(library(scran))
 
 ##############
 ## Settings ##
 ##############
 
 io <- list()
-io$path2atlas <- "/Users/ricard/data/gastrulation10x"
-io$path2scNMT <- "/Users/ricard/data/scnmt_eb"
-io$outdir <- "/Users/ricard/data/scnmt_eb/rna/mapping"
+if (grepl("ricard",Sys.info()['nodename'])) {
+  io$path2atlas <- "/Users/ricard/data/gastrulation10x"
+  io$path2scNMT <- "/Users/ricard/data/scnmt_eb"
+  io$outdir <- "/Users/ricard/data/scnmt_eb/rna/results/mapping"
+  source("/Users/ricard/scnmt_eb/rna/mapping/mapping_functions.R")
+} else if (grepl("ebi",Sys.info()['nodename'])) {
+  io$path2atlas <- "/hps/nobackup2/research/stegle/users/ricard/gastrulation10x"
+  io$path2scNMT <- "/hps/nobackup2/research/stegle/users/ricard/scnmt_eb"
+  io$outdir <- "/hps/nobackup2/research/stegle/users/ricard/scnmt_eb/rna/results/mapping"
+  source("/homes/ricard/scnmt_eb/rna/mapping/mapping_functions.R")
+} else {
+  stop("Computer not recognised")
+}
+
 
 opts <- list()
 opts$atlas_stages <- c(
@@ -47,7 +56,7 @@ sce_atlas  <- readRDS(paste0(io$path2atlas,"/processed/SingleCellExperiment.rds"
 
 # Load query metadata
 meta_nmt <- fread(paste0(io$path2scNMT,"/sample_metadata.txt")) %>%
-  .[pass_rnaQC==T & genotype=="WT"] %>% setnames("day","stage")
+  .[pass_rnaQC==T] %>% setnames("day","stage")
 table(meta_nmt$stage)
 table(meta_nmt$lineage10x_2)
 
@@ -90,5 +99,5 @@ mapping  <- mapWrap(
 ##########
 
 saveRDS(mapping, paste0(io$outdir,"/mapping.rds"))
-fwrite(mapping$mapping, paste0(io$outdir,"/mapping.txt.gz"), sep="\t")
+fwrite(mapping$mapping.dt, paste0(io$outdir,"/mapping.txt.gz"), sep="\t")
 

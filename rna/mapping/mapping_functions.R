@@ -215,7 +215,7 @@ mapWrap <- function(atlas_sce, atlas_meta, query_sce, query_meta, k = 30, npcs =
       celltype.score = multinomial.prob$celltype.score
     )
   
-  out$mapping <- cbind(out$mapping,multinomial.prob)
+  # out$mapping <- cbind(out$mapping,multinomial.prob)
   out$pca <- big_pca
   
   return(out)
